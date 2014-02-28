@@ -1,0 +1,23 @@
+name: EdgeConomy
+version: beta_2.2
+author: Panjab
+website: http://edgecraft.de
+
+depend: [EdgeCore]
+loadbefore: [EdgeCuboid]
+
+main: net.edgecraft.edgeconomy.EdgeConomy
+
+commands:
+    account:
+      description: Account Command
+      aliases: ['acc']
+    cash:
+      description: Cash Command
+    credit:
+      description: Credit Command
+    transfer:
+      description: Transfer Command
+    welfare:
+      description: Welfare Command
+    
