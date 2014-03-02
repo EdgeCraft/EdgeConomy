@@ -8,6 +8,7 @@ import net.edgecraft.edgecore.EdgeCoreAPI;
 import net.edgecraft.edgecore.command.AbstractCommand;
 import net.edgecraft.edgecore.command.Level;
 import net.edgecraft.edgecore.user.User;
+import net.edgecraft.edgecuboid.cuboid.Cuboid;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -32,14 +33,61 @@ public class WelfareCommand extends AbstractCommand {
 		
 		if (args[1].equalsIgnoreCase("apply")) {
 			
-			player.sendMessage(lang.getColoredMessage(userLang, "pluginexception").replace("[0]", "EdgeCuboid"));
+			EconomyPlayer ep = Economy.getInstance().getEconomyPlayer(player.getName());
+			Cuboid cuboid = Cuboid.getCuboid(player);
+			
+			if (ep == null) {
+				player.sendMessage(lang.getColoredMessage(userLang, "globalerror"));
+				return true;
+			}
+			
+			if (cuboid == null) {
+				player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
+				return true;
+			}
+			
+			if (ep.hasWelfare()) {
+				player.sendMessage(lang.getColoredMessage(userLang, "welfare_apply_alreadywelfare"));
+				return true;
+			}
+			
+			if (!ep.checkWelfare()) {
+				player.sendMessage(lang.getColoredMessage(userLang, "welfare_apply_warning"));
+				return true;
+			}
+			
+			ep.setWelfare(true);
+			player.sendMessage(lang.getColoredMessage(userLang, "welfare_apply_success"));
 			
 			return true;
 		}
 		
 		if (args[1].equalsIgnoreCase("cancel")) {
 			
-			player.sendMessage(lang.getColoredMessage(userLang, "pluginexception").replace("[0]", "EdgeCuboid"));
+			EconomyPlayer ep = Economy.getInstance().getEconomyPlayer(player.getName());
+			Cuboid cuboid = Cuboid.getCuboid(player);
+			
+			if (ep == null) {
+				player.sendMessage(lang.getColoredMessage(userLang, "globalerror"));
+				return true;
+			}
+			
+			if (cuboid == null) {
+				player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
+				return true;
+			}
+			
+			if (!ep.hasWelfare()) {
+				player.sendMessage(lang.getColoredMessage(userLang, "welfare_cancel_nowelfare"));
+				return true;
+			}
+			
+			if (ep.checkWelfare()) {
+				player.sendMessage(lang.getColoredMessage(userLang, "welfare_cancel_warning"));
+			}
+			
+			ep.setWelfare(false);
+			player.sendMessage(lang.getColoredMessage(userLang, "welfare_cancel_success"));
 			
 			return true;
 		}

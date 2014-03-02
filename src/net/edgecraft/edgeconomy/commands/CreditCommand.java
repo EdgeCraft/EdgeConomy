@@ -8,6 +8,8 @@ import net.edgecraft.edgecore.command.AbstractCommand;
 import net.edgecraft.edgecore.command.Level;
 import net.edgecraft.edgecore.lang.LanguageHandler;
 import net.edgecraft.edgecore.user.User;
+import net.edgecraft.edgecuboid.cuboid.Cuboid;
+import net.edgecraft.edgecuboid.cuboid.types.CuboidType;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -129,6 +131,18 @@ public class CreditCommand extends AbstractCommand {
 					
 					if (!(acc.getCredit() > 0)) {
 						player.sendMessage(lang.getColoredMessage(userLang, "nocredit"));
+						return true;
+					}
+					
+					Cuboid cuboid = Cuboid.getCuboid(player);
+					
+					if (cuboid == null) {
+						player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
+						return true;
+					}
+					
+					if (CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
+						player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
 						return true;
 					}
 					

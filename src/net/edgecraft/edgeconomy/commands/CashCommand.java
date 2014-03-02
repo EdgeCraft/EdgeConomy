@@ -119,6 +119,11 @@ public class CashCommand extends AbstractCommand {
 					return true;
 				}
 				
+				if (amount > Economy.getMonitoredAmount()) {
+					player.sendMessage(lang.getColoredMessage(userLang, "amounttoohigh"));
+					return true;
+				}
+				
 				if (player.getLocation().distanceSquared(to.getUser().getPlayer().getLocation()) > Economy.getMaxCashDistance()) { 
 					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_player").replace("[0]", to.getName()));
 					return true;

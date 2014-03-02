@@ -7,8 +7,10 @@ import net.edgecraft.edgeconomy.commands.CashCommand;
 import net.edgecraft.edgeconomy.commands.CreditCommand;
 import net.edgecraft.edgeconomy.commands.TransferCommand;
 import net.edgecraft.edgeconomy.commands.WelfareCommand;
+import net.edgecraft.edgeconomy.economy.EcoMonitor;
 import net.edgecraft.edgeconomy.economy.Economy;
 import net.edgecraft.edgeconomy.other.ConfigHandler;
+import net.edgecraft.edgeconomy.other.EcoMonitorTask;
 import net.edgecraft.edgeconomy.other.EconomySynchronizationTask;
 import net.edgecraft.edgeconomy.transactions.TransactionManager;
 import net.edgecraft.edgecore.EdgeCore;
@@ -27,6 +29,7 @@ public class EdgeConomy extends JavaPlugin {
 	
 	protected static final Economy economy = Economy.getInstance();
 	protected static final TransactionManager transaction = TransactionManager.getInstance();
+	protected static final EcoMonitor ecoMonitor = EcoMonitor.getInstance();
 	
 	private final CommandHandler commands = EdgeCoreAPI.commandsAPI();
 	private final ConfigHandler config = ConfigHandler.getInstance(this);
@@ -71,6 +74,7 @@ public class EdgeConomy extends JavaPlugin {
 		commands.registerCommand(new WelfareCommand());
 		
 		@SuppressWarnings("unused") BukkitTask ecoTask = new EconomySynchronizationTask().runTaskTimer(this, 0, 20L * 60 * 10);
+		@SuppressWarnings("unused") BukkitTask monitorTask = new EcoMonitorTask().runTaskTimer(this, 0, 20L * 60 * Economy.getPaydayInterval());
 	}
 	
 	/**
@@ -95,5 +99,13 @@ public class EdgeConomy extends JavaPlugin {
 	 */
 	public static TransactionManager getTransactions() {
 		return EdgeConomy.transaction;
+	}
+	
+	/**
+	 * Returns the EcoMonitor Instance which is instantiated in this class
+	 * @return EcoMonitor
+	 */
+	public static EcoMonitor getEcoMonitor() {
+		return EdgeConomy.ecoMonitor;
 	}
 }

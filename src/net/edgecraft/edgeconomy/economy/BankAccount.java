@@ -1,5 +1,8 @@
 package net.edgecraft.edgeconomy.economy;
 
+import java.text.DecimalFormat;
+import java.util.Locale;
+
 import net.edgecraft.edgeconomy.EdgeConomy;
 import net.edgecraft.edgecore.EdgeCoreAPI;
 import net.edgecraft.edgecore.db.DatabaseHandler;
@@ -22,17 +25,23 @@ public class BankAccount {
 	
 	protected BankAccount() { /* ... */ }
 	
-	protected BankAccount(int id, int ownerID, double balance, double lowestBalance, double highestBalance, double credit, double paidCredit, boolean closed, String reason, double payday) {
-		setID(id);
-		setOwnerID(ownerID);
-		setBalance(balance);
-		setLowestBalance(lowestBalance);
-		setHighestBalance(highestBalance);
-		setCredit(credit);
-		setPaidCredit(paidCredit);
-		setClosedStatus(closed);
-		setReason(reason);
-		setPayday(payday);
+	protected BankAccount(int id, int ownerID, double balance, double lowestBalance, double highestBalance, double credit, double paidCredit, boolean closed, String reason) {
+		try {
+			
+			setID(id);
+			setOwnerID(ownerID);
+			setBalance(balance);
+			setLowestBalance(lowestBalance);
+			setHighestBalance(highestBalance);
+			setCredit(credit);
+			setPaidCredit(paidCredit);
+			setClosedStatus(closed);
+			setReason(reason);
+			updatePayday();
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -124,6 +133,14 @@ public class BankAccount {
 	}
 	
 	/**
+	 * Returns the accounts' state tax
+	 * @return Double
+	 */
+	public int getStateTaxes() {
+		return (int) (getBalance() / 100 * Economy.getStateTax());
+	}
+	
+	/**
 	 * Returns the account owners' user instance
 	 * @return User
 	 */
@@ -177,8 +194,12 @@ public class BankAccount {
 	 * Sets the accounts' balance
 	 * @param balance
 	 */
-	protected void setBalance(double balance) {
-		this.balance = balance;
+	protected void setBalance(double balance) {		
+		DecimalFormat df = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
+		df.applyPattern("0.00");
+		
+		this.balance = Double.valueOf(df.format(balance));
+		updatePayday();
 	}
 	
 	/**
@@ -202,8 +223,12 @@ public class BankAccount {
 	 * @param credit
 	 */
 	protected void setCredit(double credit) {
-		if (credit >= 0.0D)
-			this.credit = credit;
+		if (credit <= 0) this.credit = 0;
+		
+		DecimalFormat df = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
+		df.applyPattern("0.00");
+		
+		this.credit = Double.valueOf(df.format(credit));
 	}
 	
 	/**
@@ -211,8 +236,12 @@ public class BankAccount {
 	 * @param paidCredit
 	 */
 	protected void setPaidCredit(double paidCredit) {
-		if (paidCredit >= 0.0D) 
-			this.paidCredit = paidCredit;
+		if (paidCredit <= 0) this.paidCredit = 0;
+		
+		DecimalFormat df = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
+		df.applyPattern("0.00");
+		
+		this.paidCredit = Double.valueOf(df.format(paidCredit));
 	}
 	
 	/**
@@ -241,15 +270,6 @@ public class BankAccount {
 	protected void setReason(String reason) {
 		if (reason != null)
 			this.reason = reason;
-	}
-	
-	/**
-	 * Sets the payday
-	 * @param payday
-	 */
-	protected void setPayday(double payday) {
-		if (payday >= 0.0D)
-			this.payday = payday;
 	}
 	
 	/**
@@ -348,17 +368,27 @@ public class BankAccount {
 		setReason(reason);
 		update("reason", reason);
 	}
-	
+	public static void main(String[] args) {
+		System.out.println(new DecimalFormat("0.000").format(43.12391));
+	}
 	/**
 	 * Calculates and updates the accounts' payday
 	 * @param payday
 	 * @throws Exception
 	 */
-	public void updatePayday(double payday) throws Exception {
-		if (getBalance() <= 0) setPayday(0);
-		
-		setPayday(getBalance() / 100 * Economy.getPaydayBonus());
-		update("payday", getPayday());
+	public void updatePayday() {
+		try {
+			
+			if (getBalance() <= 0) this.payday = 0;
+			
+			DecimalFormat df = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
+			df.applyPattern("0.00");
+			
+			this.payday = Double.valueOf(df.format(getBalance() / 100 * Economy.getPaydayBonus()));
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	@Override

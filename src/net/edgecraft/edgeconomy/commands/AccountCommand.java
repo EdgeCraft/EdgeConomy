@@ -10,6 +10,8 @@ import net.edgecraft.edgecore.command.AbstractCommand;
 import net.edgecraft.edgecore.command.Level;
 import net.edgecraft.edgecore.lang.LanguageHandler;
 import net.edgecraft.edgecore.user.User;
+import net.edgecraft.edgecuboid.cuboid.Cuboid;
+import net.edgecraft.edgecuboid.cuboid.types.CuboidType;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -85,7 +87,7 @@ public class AccountCommand extends AbstractCommand {
 				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_id").replace("[0]", acc.getID() + ""));
 				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_owner").replace("[0]", acc.getOwner()));
 				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_balance").replace("[0]", acc.getBalance() + ""));
-				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_credit").replace("[0]", acc.getCredit() + ""));
+				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_credit").replace("[0]", acc.getRawCredit() + "").replace("[1]", acc.getCredit() + ""));
 				
 				if (acc.hasWelfare()) 
 					player.sendMessage(lang.getColoredMessage(userLang, "acc_info_welfare_true"));
@@ -128,7 +130,18 @@ public class AccountCommand extends AbstractCommand {
 					return true;
 				}
 				
+				Cuboid cuboid = Cuboid.getCuboid(player);
 				EconomyPlayer ep = acc.getEconomyPlayer();
+				
+				if (cuboid == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "eco_nocuboid"));
+					return true;
+				}
+				
+				if (CuboidType.getType(cuboid.getCuboidType()) != CuboidType.ATM || CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
+					player.sendMessage(lang.getColoredMessage(userLang, "eco_nocuboid"));
+					return true;
+				}
 				
 				if (ep == null) {
 					player.sendMessage(lang.getColoredMessage(userLang, "notfound"));
@@ -173,6 +186,12 @@ public class AccountCommand extends AbstractCommand {
 				}
 				
 				EconomyPlayer ep = acc.getEconomyPlayer();
+				Cuboid cuboid = Cuboid.getCuboid(player);
+				
+				if (cuboid == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "eco_nocuboid"));
+					return true;
+				}
 				
 				if (ep == null) {
 					player.sendMessage(lang.getColoredMessage(userLang, "notfound"));
@@ -194,16 +213,32 @@ public class AccountCommand extends AbstractCommand {
 					return true;
 				}
 				
-				// TODO Add EdgeCuboid-implementation for ATM-Range-Check
+				if (CuboidType.getType(cuboid.getCuboidType()) != CuboidType.ATM || CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
+					player.sendMessage(lang.getColoredMessage(userLang, "eco_nocuboid"));
+					return true;
+				}
 				
-				double withdrawalFee = (int) (acc.getBalance() / 100 * Economy.getWithdrawalFee());
-				
-				ep.updateCash(ep.getCash() + amount);
-				acc.updateBalance(acc.getBalance() - (amount + withdrawalFee));
-				
-				player.sendMessage(lang.getColoredMessage(userLang, "acc_withdraw_success").replace("[0]", amount + ""));
-				
-				return true;
+				if (CuboidType.getType(cuboid.getCuboidType()) == CuboidType.ATM) {
+					
+					if (amount > Economy.getMaxATMAmount() && CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
+						player.sendMessage(lang.getColoredMessage(userLang, "withdraw_needbank").replace("[0]", Economy.getMaxATMAmount() + ""));
+						return true;
+					}
+					
+					if (amount > Economy.getMonitoredAmount()) {
+						player.sendMessage(lang.getColoredMessage(userLang, "amounttoohigh"));
+						return true;
+					}
+					
+					double withdrawalFee = (int) (acc.getBalance() / 100 * Economy.getWithdrawalFee());
+										
+					ep.updateCash(ep.getCash() + amount);
+					acc.updateBalance(acc.getBalance() - (amount + withdrawalFee));
+					
+					player.sendMessage(lang.getColoredMessage(userLang, "acc_withdraw_success").replace("[0]", amount + ""));
+					
+					return true;
+				}
 			}
 			
 			if (args[1].equalsIgnoreCase("create")) {

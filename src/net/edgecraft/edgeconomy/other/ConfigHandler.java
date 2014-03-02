@@ -35,19 +35,22 @@ public class ConfigHandler {
 		getConfig().addDefault("General.AllowAccounts", true);
 		getConfig().addDefault("General.AutoCreateAccounts", true);	
 		getConfig().addDefault("General.MaxCashDistance", 5);
-		getConfig().addDefault("General.MaxATMDistance", 1);
+		getConfig().addDefault("General.MaxATMAmount", 2000.0D);
+		getConfig().addDefault("General.MonitoredAmount", 3500.0D);
+		
 		
 		// Economy
 		getConfig().addDefault("Economy.State", "EdgeCraft");		
-		getConfig().addDefault("Economy.DefaultCash", 0.0);
-		getConfig().addDefault("Economy.DefaultWelfare", 400.0);
-		getConfig().addDefault("Economy.MaxWelfareBalance", 3500.0);	
+		getConfig().addDefault("Economy.DefaultCash", 0.0D);
+		getConfig().addDefault("Economy.DefaultWelfare", 400.0D);
+		getConfig().addDefault("Economy.MaxWelfareBalance", 3500.0D);	
 		
 		// Economy Fees
-		getConfig().addDefault("Economy.TransferFee", 0.1);
-		getConfig().addDefault("Economy.WithdrawalFee", 0.1);
-		getConfig().addDefault("Economy.CreditFee", 0.4);
-		getConfig().addDefault("Economy.PaydayBonus", 0.2);
+		getConfig().addDefault("Economy.TransferFee", 0.1D);
+		getConfig().addDefault("Economy.WithdrawalFee", 0.1D);
+		getConfig().addDefault("Economy.CreditFee", 0.4D);
+		getConfig().addDefault("Economy.PaydayBonus", 0.2D);
+		getConfig().addDefault("Economy.StateTax", 0.6D);
 		
 		getConfig().options().copyDefaults(true);
 		getPlugin().saveConfig();
@@ -65,8 +68,10 @@ public class ConfigHandler {
 		Economy.setAllowAccounts(getConfig().getBoolean("General.AllowAccounts"));
 		Economy.setAutoCreateAccounts(getConfig().getBoolean("General.AutoCreateAccounts"));
 		
+		Economy.setPaydayInterval(getConfig().getInt("General.IntervalInMinutes"));
 		Economy.setMaxCashDistance(getConfig().getInt("General.MaxCashDistance"));
-		Economy.setMaxATMDistance(getConfig().getInt("General.MaxATMDistance"));
+		Economy.setMaxATMAmount(getConfig().getDouble("General.MaxATMAmount"));
+		Economy.setMonitoredAmount(getConfig().getDouble("General.MonitoredAmount"));
 		
 		Economy.setState(getConfig().getString("Economy.State"));
 		Economy.setCurrency(EdgeCore.getCurrency());
@@ -78,6 +83,7 @@ public class ConfigHandler {
 		Economy.setWithdrawalFee(getConfig().getDouble("Economy.WithdrawalFee"));
 		Economy.setCreditFee(getConfig().getDouble("Economy.CreditFee"));
 		Economy.setPaydayBonus(getConfig().getDouble("Economy.PaydayBonus"));
+		Economy.setStateTax(getConfig().getDouble("Economy.StateTax"));
 		
 	}
 	

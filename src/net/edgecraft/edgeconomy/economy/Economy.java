@@ -19,9 +19,10 @@ public class Economy {
 	private static String state;
 	private static String currency;
 	
+	private static int paydayInterval;
 	private static int maxCashDistance;
-	private static int maxATMDistance;
-	private static int monitoredAmount;
+	private static double maxATMAmount;
+	private static double monitoredAmount;
 	
 	private static double defaultCash;
 	private static double defaultWelfare;
@@ -30,6 +31,7 @@ public class Economy {
 	private static double withdrawalFee;
 	private static double creditFee;
 	private static double paydayBonus;
+	private static double stateTax;
 	
 	private static boolean allowAccounts;
 	private static boolean autoCreateAccounts;
@@ -66,8 +68,8 @@ public class Economy {
 			
 			int id = generateAccountID();
 			
-			PreparedStatement registerAccount = db.prepareUpdate("INSERT INTO " + Economy.accountTable + " (id, ownerID, balance, lowestbalance, highestbalance, credit, paidcredit, closed, reason, payday) "
-					+ "VALUES (?, ?, ?, '0', '0', ?, '0', DEFAULT, DEFAULT, '0');");
+			PreparedStatement registerAccount = db.prepareUpdate("INSERT INTO " + Economy.accountTable + " (id, ownerID, balance, lowestbalance, highestbalance, credit, paidcredit, closed, reason) "
+					+ "VALUES (?, ?, ?, '0', '0', ?, '0', DEFAULT, DEFAULT);");
 			
 			registerAccount.setInt(1, id);
 			registerAccount.setInt(2, ownerID);
@@ -296,12 +298,10 @@ public class Economy {
 					} else if(entry.getKey().equals("reason")) {
 						acc.setReason(entry.getValue().toString());
 						
-					} else if(entry.getKey().equals("payday")) {
-						acc.setPayday(Double.valueOf(entry.getValue().toString()));
-						
 					}
 				}
 				
+				acc.updatePayday();
 				Economy.accounts.put(acc.getID(), acc);
 			}
 			
@@ -358,13 +358,17 @@ public class Economy {
 	public static String getCurrency() {
 		return currency;
 	}
-
+	
+	public static int getPaydayInterval() {
+		return paydayInterval;
+	}
+	
 	public static int getMaxCashDistance() {
 		return maxCashDistance;
 	}
 
-	public static int getMaxATMDistance() {
-		return maxATMDistance;
+	public static double getMaxATMAmount() {
+		return maxATMAmount;
 	}
 
 	public static double getDefaultCash() {
@@ -415,12 +419,16 @@ public class Economy {
 		Economy.currency = currency;
 	}
 
+	public static void setPaydayInterval(int interval) {
+		Economy.paydayInterval = interval;
+	}
+	
 	public static void setMaxCashDistance(int maxCashDistance) {
 		Economy.maxCashDistance = maxCashDistance;
 	}
 
-	public static void setMaxATMDistance(int maxATMDistance) {
-		Economy.maxATMDistance = maxATMDistance;
+	public static void setMaxATMAmount(double maxATMAmount) {
+		Economy.maxATMAmount = maxATMAmount;
 	}
 
 	public static void setDefaultCash(double defaultCash) {
@@ -459,12 +467,19 @@ public class Economy {
 		Economy.autoCreateAccounts = autoCreateAccounts;
 	}
 	
-	public static int getMonitoredAmount() {
+	public static double getMonitoredAmount() {
 		return monitoredAmount;
 	}
 
-	public static void setMonitoredAmount(int monitoredAmount) {
+	public static void setMonitoredAmount(double monitoredAmount) {
 		Economy.monitoredAmount = monitoredAmount;
 	}
 	
+	public static double getStateTax() {
+		return stateTax;
+	}
+	
+	public static void setStateTax(double tax) {
+		Economy.stateTax = tax;
+	}
 }

@@ -9,6 +9,8 @@ import net.edgecraft.edgecore.EdgeCoreAPI;
 import net.edgecraft.edgecore.command.AbstractCommand;
 import net.edgecraft.edgecore.command.Level;
 import net.edgecraft.edgecore.user.User;
+import net.edgecraft.edgecuboid.cuboid.Cuboid;
+import net.edgecraft.edgecuboid.cuboid.types.CuboidType;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -129,7 +131,7 @@ public class TransferCommand extends AbstractCommand {
 		}
 	}
 	
-	private void doTransaction(BankAccount from, BankAccount to, double amount, String description, CommandSender sender, User user) {
+	private void doTransaction(BankAccount from, BankAccount to, double amount, String description, Player sender, User user) {
 		if (from == null || to == null) {
 			sendUsage(sender);
 			return;
@@ -144,21 +146,32 @@ public class TransferCommand extends AbstractCommand {
 			sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "notenoughmoney"));
 			return;
 		}
-	
-		if (amount >= Economy.getMonitoredAmount()) {
-			for (User u : EdgeCoreAPI.userAPI().getUsers().values()) {
-				if (u == null || !u.getPlayer().isOnline()) continue;
-				
-				if (Level.canUse(u, Level.TEAM)) {
-					u.getPlayer().sendMessage(lang.getColoredMessage(user.getLanguage(), "transaction_highamount").replace("[0]", from.getOwner()).replace("[1]", to.getOwner()).replace("[2]", amount + ""));
-				}
-			}
+		
+		Cuboid cuboid = Cuboid.getCuboid(sender);
+		
+		if (cuboid == null) {
+			sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "notinrange_location").replace("[0]", "ATM"));
+			return;
 		}
 		
-		// TODO Add check for bank cuboid or ATM
-		
-		EdgeConomy.getTransactions().addTransaction(from, to, amount, description);
-		sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "transfer_success").replace("[0]", amount + "").replace("[1]", to.getID() + ""));
-		
+		if (CuboidType.getType(cuboid.getCuboidType()) == CuboidType.ATM) {
+			
+			if (amount >= Economy.getMonitoredAmount()) {
+				for (User u : EdgeCoreAPI.userAPI().getUsers().values()) {
+					if (u == null || !u.getPlayer().isOnline()) continue;
+					
+					if (Level.canUse(u, Level.TEAM)) {
+						u.getPlayer().sendMessage(lang.getColoredMessage(user.getLanguage(), "transaction_highamount").replace("[0]", from.getOwner()).replace("[1]", to.getOwner()).replace("[2]", amount + ""));
+					}
+				}
+			}
+			
+			EdgeConomy.getTransactions().addTransaction(from, to, amount, description);
+			sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "transfer_success").replace("[0]", amount + "").replace("[1]", to.getID() + ""));
+			
+		} else {
+			sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "eco_nocuboid"));
+			return;
+		}
 	}
 }
