@@ -1,6 +1,7 @@
-name: EdgeConomy
+﻿name: EdgeConomy
 version: beta_2.2
 author: Panjab
+authors: [lush]
 website: http://edgecraft.de
 
 depend: [EdgeCore]

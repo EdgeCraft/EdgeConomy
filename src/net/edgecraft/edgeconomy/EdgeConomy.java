@@ -11,11 +11,13 @@ import net.edgecraft.edgeconomy.economy.EcoMonitor;
 import net.edgecraft.edgeconomy.economy.Economy;
 import net.edgecraft.edgeconomy.other.ConfigHandler;
 import net.edgecraft.edgeconomy.other.EcoMonitorTask;
+import net.edgecraft.edgeconomy.other.EconomyCommands;
 import net.edgecraft.edgeconomy.other.EconomySynchronizationTask;
 import net.edgecraft.edgeconomy.transactions.TransactionManager;
 import net.edgecraft.edgecore.EdgeCore;
 import net.edgecraft.edgecore.EdgeCoreAPI;
 import net.edgecraft.edgecore.command.CommandHandler;
+import net.edgecraft.edgecore.mod.ModCommand;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -32,7 +34,7 @@ public class EdgeConomy extends JavaPlugin {
 	protected static final EcoMonitor ecoMonitor = EcoMonitor.getInstance();
 	
 	private final CommandHandler commands = EdgeCoreAPI.commandsAPI();
-	private final ConfigHandler config = ConfigHandler.getInstance(this);
+	private final ConfigHandler config = ConfigHandler.getInstance( this );
 	
 	/**
 	 * Is used when the plugin is going to shut down
@@ -67,11 +69,7 @@ public class EdgeConomy extends JavaPlugin {
 	 */
 	private void registerData() {
 		
-		commands.registerCommand(new AccountCommand());
-		commands.registerCommand(new CashCommand());
-		commands.registerCommand(new CreditCommand());
-		commands.registerCommand(new TransferCommand());
-		commands.registerCommand(new WelfareCommand());
+		commands.registerCommand( new CommandCollection( EconomyCommands.getInstance() ) );
 		
 		@SuppressWarnings("unused") BukkitTask ecoTask = new EconomySynchronizationTask().runTaskTimer(this, 0, 20L * 60 * 10);
 		@SuppressWarnings("unused") BukkitTask monitorTask = new EcoMonitorTask().runTaskTimer(this, 0, 20L * 60 * Economy.getPaydayInterval());
