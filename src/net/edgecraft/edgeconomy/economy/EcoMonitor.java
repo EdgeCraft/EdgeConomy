@@ -87,7 +87,7 @@ public class EcoMonitor {
 			if (!acc.isClosed())
 				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_payday_value").replace("[0]", acc.getPayday() + "")));
 			else
-				payday = obj.getScore(Bukkit.getOfflinePlayer("ï¿½cKonto geschlossen!"));
+				payday = obj.getScore(Bukkit.getOfflinePlayer("§cKonto geschlossen!"));
 			
 			paydayTitle.setScore(10);
 			payday.setScore(9);
@@ -191,7 +191,7 @@ public class EcoMonitor {
 			if (!acc.isClosed())
 				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_payday_value").replace("[0]", acc.getPayday() + "")));
 			else
-				payday = obj.getScore(Bukkit.getOfflinePlayer("ï¿½cKonto geschlossen!"));
+				payday = obj.getScore(Bukkit.getOfflinePlayer("§cKonto geschlossen!"));
 			
 			paydayTitle.setScore(10);
 			payday.setScore(9);

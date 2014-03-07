@@ -40,7 +40,7 @@ public class TransferCommand extends AbstractCommand {
 				
 				sender.sendMessage(EdgeCore.usageColor + "/transfer <to> <amount> <description>");
 				
-				if (!Level.canUse(u, Level.TEAM)) return;
+				if (!Level.canUse(u, Level.MODERATOR)) return;
 				
 				sender.sendMessage(EdgeCore.usageColor + "/transfer last [<amount>]");
 				
@@ -79,7 +79,7 @@ public class TransferCommand extends AbstractCommand {
 			
 			if (args[1].equalsIgnoreCase("last")) {
 				if (args.length == 2) {
-					if(!Level.canUse(user, Level.TEAM)) {
+					if(!Level.canUse(user, Level.MODERATOR)) {
 						player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
 						return true;
 					}
@@ -160,7 +160,7 @@ public class TransferCommand extends AbstractCommand {
 				for (User u : EdgeCoreAPI.userAPI().getUsers().values()) {
 					if (u == null || !u.getPlayer().isOnline()) continue;
 					
-					if (Level.canUse(u, Level.TEAM)) {
+					if (Level.canUse(u, Level.MODERATOR)) {
 						u.getPlayer().sendMessage(lang.getColoredMessage(user.getLanguage(), "transaction_highamount").replace("[0]", from.getOwner()).replace("[1]", to.getOwner()).replace("[2]", amount + ""));
 					}
 				}

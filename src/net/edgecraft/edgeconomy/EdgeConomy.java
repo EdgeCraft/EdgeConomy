@@ -2,11 +2,6 @@ package net.edgecraft.edgeconomy;
 
 import java.util.logging.Logger;
 
-import net.edgecraft.edgeconomy.commands.AccountCommand;
-import net.edgecraft.edgeconomy.commands.CashCommand;
-import net.edgecraft.edgeconomy.commands.CreditCommand;
-import net.edgecraft.edgeconomy.commands.TransferCommand;
-import net.edgecraft.edgeconomy.commands.WelfareCommand;
 import net.edgecraft.edgeconomy.economy.EcoMonitor;
 import net.edgecraft.edgeconomy.economy.Economy;
 import net.edgecraft.edgeconomy.other.ConfigHandler;
@@ -17,7 +12,7 @@ import net.edgecraft.edgeconomy.transactions.TransactionManager;
 import net.edgecraft.edgecore.EdgeCore;
 import net.edgecraft.edgecore.EdgeCoreAPI;
 import net.edgecraft.edgecore.command.CommandHandler;
-import net.edgecraft.edgecore.mod.ModCommand;
+import net.edgecraft.edgecore.mod.CommandCollection;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;

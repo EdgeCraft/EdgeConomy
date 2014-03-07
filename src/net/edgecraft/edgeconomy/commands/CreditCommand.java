@@ -48,7 +48,7 @@ public class CreditCommand extends AbstractCommand {
 				sender.sendMessage(EdgeCore.usageColor + "/credit pay <amount>");
 				sender.sendMessage(EdgeCore.usageColor + "/credit info");
 				
-				if (!Level.canUse(u, Level.TEAM)) return;
+				if (!Level.canUse(u, Level.MODERATOR)) return;
 				
 				sender.sendMessage(EdgeCore.usageColor + "/credit set <account> <amount>");
 				sender.sendMessage(EdgeCore.usageColor + "/credit remove <account>");
