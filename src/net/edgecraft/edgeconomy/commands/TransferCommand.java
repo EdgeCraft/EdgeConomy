@@ -56,6 +56,11 @@ public class TransferCommand extends AbstractCommand {
 		
 		String userLang = user.getLanguage();
 		
+		if (!Level.canUse(user, getLevel())) {
+			player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
+			return true;
+		}
+		
 		try {			
 			
 			// /transfer <to> <amount> <description>

@@ -72,6 +72,11 @@ public class AccountCommand extends AbstractCommand {
 		
 		String userLang = user.getLanguage();
 		
+		if (!Level.canUse(user, getLevel())) {
+			player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
+			return true;
+		}
+		
 		try {
 			
 			if (args[1].equalsIgnoreCase("info")) {

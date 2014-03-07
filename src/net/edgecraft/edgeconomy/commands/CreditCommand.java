@@ -63,6 +63,11 @@ public class CreditCommand extends AbstractCommand {
 		
 		String userLang = user.getLanguage();
 		
+		if (!Level.canUse(user, getLevel())) {
+			player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
+			return true;
+		}
+		
 		try {
 			
 			if (args[1].equalsIgnoreCase("apply")) {
@@ -91,6 +96,11 @@ public class CreditCommand extends AbstractCommand {
 				}
 				
 				if (args.length == 3) {
+					
+					if (!Level.canUse(user, Level.MODERATOR)) {
+						player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
+						return true;
+					}
 					
 					BankAccount acc = EdgeConomy.getEconomy().getAccount(args[2]);
 					
@@ -166,7 +176,7 @@ public class CreditCommand extends AbstractCommand {
 				}
 				
 				if (args.length == 4) {
-					if (!Level.canUse(user, Level.ADMIN)) {
+					if (!Level.canUse(user, Level.MODERATOR)) {
 						player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
 						return true;
 					}
@@ -199,10 +209,45 @@ public class CreditCommand extends AbstractCommand {
 				}
 			}
 			
+			if (args[1].equalsIgnoreCase("set")) {
+				if (args.length != 4) {
+					sendUsage(player);
+					return false;
+				}
+				
+				if (!Level.canUse(user, Level.MODERATOR)) {
+					player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
+					return true;
+				}
+				
+				BankAccount acc = EdgeConomy.getEconomy().getAccountByOwnerID(Integer.parseInt(args[2]));
+				double amount = Double.parseDouble(args[3]);
+				
+				if (acc == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "unknownaccount").replace("[0]", args[2]));
+					return true;
+				}
+				
+				if (amount <= 0) {
+					player.sendMessage(lang.getColoredMessage(userLang, "amounttoolow"));
+					return true;
+				}
+				
+				acc.updateCredit(amount);
+				player.sendMessage(lang.getColoredMessage(userLang, "admin_credit_set_success").replace("[0]", args[2]).replace("[1]", amount + ""));
+								
+				return true;
+			}
+			
 			if (args[1].equalsIgnoreCase("remove")) {
 				if (args.length != 3) {
 					sendUsage(player);
 					return false;
+				}
+				
+				if (!Level.canUse(user, Level.MODERATOR)) {
+					player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
+					return true;
 				}
 				
 				BankAccount acc = EdgeConomy.getEconomy().getAccountByOwnerID(Integer.parseInt(args[2]));

@@ -62,6 +62,11 @@ public class CashCommand extends AbstractCommand {
 		
 		String userLang = user.getLanguage();
 		
+		if (!Level.canUse(user, getLevel())) {
+			player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
+			return true;
+		}
+		
 		if (args[1].equalsIgnoreCase("info")) {
 			
 			if (!Level.canUse(user, Level.USER)) {

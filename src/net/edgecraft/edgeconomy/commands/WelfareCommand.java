@@ -31,6 +31,11 @@ public class WelfareCommand extends AbstractCommand {
 		
 		String userLang = user.getLanguage();
 		
+		if (!Level.canUse(user, getLevel())) {
+			player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
+			return true;
+		}
+		
 		if (args[1].equalsIgnoreCase("apply")) {
 			
 			EconomyPlayer ep = Economy.getInstance().getEconomyPlayer(player.getName());
