@@ -39,7 +39,7 @@ public class WelfareCommand extends AbstractCommand {
 		if (args[1].equalsIgnoreCase("apply")) {
 			
 			EconomyPlayer ep = Economy.getInstance().getEconomyPlayer(player.getName());
-			Cuboid cuboid = Cuboid.getCuboid(player);
+			Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
 			
 			if (ep == null) {
 				player.sendMessage(lang.getColoredMessage(userLang, "globalerror"));
@@ -70,7 +70,7 @@ public class WelfareCommand extends AbstractCommand {
 		if (args[1].equalsIgnoreCase("cancel")) {
 			
 			EconomyPlayer ep = Economy.getInstance().getEconomyPlayer(player.getName());
-			Cuboid cuboid = Cuboid.getCuboid(player);
+			Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
 			
 			if (ep == null) {
 				player.sendMessage(lang.getColoredMessage(userLang, "globalerror"));

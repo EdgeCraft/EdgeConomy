@@ -152,7 +152,7 @@ public class TransferCommand extends AbstractCommand {
 			return;
 		}
 		
-		Cuboid cuboid = Cuboid.getCuboid(sender);
+		Cuboid cuboid = Cuboid.getCuboid(sender.getLocation());
 		
 		if (cuboid == null) {
 			sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "notinrange_location").replace("[0]", "ATM"));

@@ -135,7 +135,7 @@ public class AccountCommand extends AbstractCommand {
 					return true;
 				}
 				
-				Cuboid cuboid = Cuboid.getCuboid(player);
+				Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
 				EconomyPlayer ep = acc.getEconomyPlayer();
 				
 				if (cuboid == null) {
@@ -191,7 +191,7 @@ public class AccountCommand extends AbstractCommand {
 				}
 				
 				EconomyPlayer ep = acc.getEconomyPlayer();
-				Cuboid cuboid = Cuboid.getCuboid(player);
+				Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
 				
 				if (cuboid == null) {
 					player.sendMessage(lang.getColoredMessage(userLang, "eco_nocuboid"));

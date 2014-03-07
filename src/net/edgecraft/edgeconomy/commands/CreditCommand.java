@@ -144,7 +144,7 @@ public class CreditCommand extends AbstractCommand {
 						return true;
 					}
 					
-					Cuboid cuboid = Cuboid.getCuboid(player);
+					Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
 					
 					if (cuboid == null) {
 						player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
