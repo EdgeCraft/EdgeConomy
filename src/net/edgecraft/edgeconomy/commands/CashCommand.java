@@ -179,15 +179,15 @@ public class CashCommand extends AbstractCommand {
 			}
 		}
 		
+		if ( !Level.canUse( user, Level.ADMIN ) ) {
+			player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
+			return true;
+		}
+		
 		if (args[1].equalsIgnoreCase("update")) {
 			if (args.length != 4) {
 				sendUsage(player);
 				return false;
-			}
-			
-			if (!Level.canUse(user, Level.ADMIN)) {
-				player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
-				return true;
 			}
 			
 			try {
@@ -219,11 +219,6 @@ public class CashCommand extends AbstractCommand {
 			if (args.length != 5) {
 				sendUsage(player);
 				return false;
-			}
-			
-			if (!Level.canUse(user, Level.ADMIN)) {
-				player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
-				return true;
 			}
 			
 			try {
