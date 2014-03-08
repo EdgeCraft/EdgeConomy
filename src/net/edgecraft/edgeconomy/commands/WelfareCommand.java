@@ -4,11 +4,11 @@ import net.edgecraft.edgeconomy.EdgeConomy;
 import net.edgecraft.edgeconomy.economy.Economy;
 import net.edgecraft.edgeconomy.economy.EconomyPlayer;
 import net.edgecraft.edgecore.EdgeCore;
-import net.edgecraft.edgecore.EdgeCoreAPI;
 import net.edgecraft.edgecore.command.AbstractCommand;
 import net.edgecraft.edgecore.command.Level;
 import net.edgecraft.edgecore.user.User;
 import net.edgecraft.edgecuboid.cuboid.Cuboid;
+import net.edgecraft.edgecuboid.cuboid.types.CuboidType;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -31,11 +31,6 @@ public class WelfareCommand extends AbstractCommand {
 		
 		String userLang = user.getLanguage();
 		
-		if (!Level.canUse(user, getLevel())) {
-			player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
-			return true;
-		}
-		
 		if (args[1].equalsIgnoreCase("apply")) {
 			
 			EconomyPlayer ep = Economy.getInstance().getEconomyPlayer(player.getName());
@@ -46,7 +41,7 @@ public class WelfareCommand extends AbstractCommand {
 				return true;
 			}
 			
-			if (cuboid == null) {
+			if (cuboid == null || cuboid.getCuboidType() != CuboidType.Bank.getTypeID()) {
 				player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
 				return true;
 			}
@@ -77,7 +72,7 @@ public class WelfareCommand extends AbstractCommand {
 				return true;
 			}
 			
-			if (cuboid == null) {
+			if (cuboid == null || cuboid.getCuboidType() != CuboidType.Bank.getTypeID()) {
 				player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
 				return true;
 			}
@@ -124,21 +119,12 @@ public class WelfareCommand extends AbstractCommand {
 	}
 
 	@Override
-	public void sendUsage(CommandSender sender) {
-		if (sender instanceof Player) {
-			
-			User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
-			
-			if (u != null) {
-				
-				if (!Level.canUse(u, getLevel())) return;
-				
-				sender.sendMessage(EdgeCore.usageColor + "/welfare apply");
-				sender.sendMessage(EdgeCore.usageColor + "/welfare cancel");
-				sender.sendMessage(EdgeCore.usageColor + "/welfare info");
-				
-			}
-		}
+	public void sendUsageImpl(CommandSender sender) {
+		if (!(sender instanceof Player)) return;
+		
+		sender.sendMessage(EdgeCore.usageColor + "/welfare apply");
+		sender.sendMessage(EdgeCore.usageColor + "/welfare cancel");
+		sender.sendMessage(EdgeCore.usageColor + "/welfare info");
 	}
 
 	@Override

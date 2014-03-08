@@ -34,38 +34,26 @@ public class CashCommand extends AbstractCommand {
 	}
 	
 	@Override
-	public void sendUsage(CommandSender sender) {
-		if (sender instanceof Player) {
-			
-			User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
-			
-			if (u != null) {
-				
-				if (!Level.canUse(u, getLevel())) return;
-				
-				sender.sendMessage(EdgeCore.usageColor + "/cash info");
-				sender.sendMessage(EdgeCore.usageColor + "/cash give <user> <amount>");
-				sender.sendMessage(EdgeCore.usageColor + "/cash donate <amount>");
-				
-				if (!Level.canUse(u, Level.ADMIN)) return;
-				
-				sender.sendMessage(EdgeCore.usageColor + "/cash update <user> <amount>");
-				sender.sendMessage(EdgeCore.usageColor + "/cash transfer <from> <to> <amount>");
-				sender.sendMessage(EdgeCore.usageColor + "/cash reload [<user>]");
-				
-			}				
-		}
+	public void sendUsageImpl(CommandSender sender) {
+		if (!(sender instanceof Player)) return;
+		
+		sender.sendMessage(EdgeCore.usageColor + "/cash info");
+		sender.sendMessage(EdgeCore.usageColor + "/cash give <user> <amount>");
+		sender.sendMessage(EdgeCore.usageColor + "/cash donate <amount>");
+		
+		User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
+		
+		if (u != null || !Level.canUse(u, Level.MODERATOR)) return;
+		
+		sender.sendMessage(EdgeCore.usageColor + "/cash update <user> <amount>");
+		sender.sendMessage(EdgeCore.usageColor + "/cash transfer <from> <to> <amount>");
+		sender.sendMessage(EdgeCore.usageColor + "/cash reload [<user>]");
 	}
 	
 	@Override
 	public boolean runImpl(Player player, User user, String[] args) throws Exception {
 		
 		String userLang = user.getLanguage();
-		
-		if (!Level.canUse(user, getLevel())) {
-			player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
-			return true;
-		}
 		
 		if (args[1].equalsIgnoreCase("info")) {
 			

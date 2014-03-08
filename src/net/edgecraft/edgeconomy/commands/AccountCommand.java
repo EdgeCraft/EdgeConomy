@@ -37,45 +37,33 @@ public class AccountCommand extends AbstractCommand {
 	}
 	
 	@Override
-	public void sendUsage(CommandSender sender) {
-		if (sender instanceof Player) {
-			
-			User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
-			
-			if (u != null) {
-				
-				if (!Level.canUse(u, getLevel())) return;
-				
-				sender.sendMessage(EdgeCore.usageColor + "/account info");
-				sender.sendMessage(EdgeCore.usageColor + "/account apply");
-				sender.sendMessage(EdgeCore.usageColor + "/account deactivate");
-				sender.sendMessage(EdgeCore.usageColor + "/account deposit <amount>");
-				sender.sendMessage(EdgeCore.usageColor + "/account withdraw <amount>");
-				
-				if (!Level.canUse(u, Level.ADMIN)) return;
-				
-				sender.sendMessage(EdgeCore.usageColor + "/account create <user> <balance> <credit>");
-				sender.sendMessage(EdgeCore.usageColor + "/account delete <id>");
-				sender.sendMessage(EdgeCore.usageColor + "/account updatebalance <id> <amount>");
-				sender.sendMessage(EdgeCore.usageColor + "/account lock <id>");
-				sender.sendMessage(EdgeCore.usageColor + "/account unlock <id>");
-				sender.sendMessage(EdgeCore.usageColor + "/account exists <id>");
-				sender.sendMessage(EdgeCore.usageColor + "/account reload [<id>]");
-				sender.sendMessage(EdgeCore.usageColor + "/account amount");
-				
-			}
-		}
+	public void sendUsageImpl(CommandSender sender) {
+		if (!(sender instanceof Player)) return;
+		
+		sender.sendMessage(EdgeCore.usageColor + "/account info");
+		sender.sendMessage(EdgeCore.usageColor + "/account apply");
+		sender.sendMessage(EdgeCore.usageColor + "/account deactivate");
+		sender.sendMessage(EdgeCore.usageColor + "/account deposit <amount>");
+		sender.sendMessage(EdgeCore.usageColor + "/account withdraw <amount>");
+		
+		User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
+		
+		if (u != null || !Level.canUse(u, Level.MODERATOR)) return;
+		
+		sender.sendMessage(EdgeCore.usageColor + "/account create <user> <balance> <credit>");
+		sender.sendMessage(EdgeCore.usageColor + "/account delete <id>");
+		sender.sendMessage(EdgeCore.usageColor + "/account updatebalance <id> <amount>");
+		sender.sendMessage(EdgeCore.usageColor + "/account lock <id>");
+		sender.sendMessage(EdgeCore.usageColor + "/account unlock <id>");
+		sender.sendMessage(EdgeCore.usageColor + "/account exists <id>");
+		sender.sendMessage(EdgeCore.usageColor + "/account reload [<id>]");
+		sender.sendMessage(EdgeCore.usageColor + "/account amount");
 	}
 	
 	@Override
 	public boolean runImpl(Player player, User user, String[] args) throws Exception {
 		
 		String userLang = user.getLanguage();
-		
-		if (!Level.canUse(user, getLevel())) {
-			player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
-			return true;
-		}
 		
 		try {
 			

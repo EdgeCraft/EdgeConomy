@@ -35,38 +35,27 @@ public class CreditCommand extends AbstractCommand {
 	}
 	
 	@Override
-	public void sendUsage(CommandSender sender) {
-		if (sender instanceof Player) {
-			
-			User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
-			
-			if (u != null) {
-				
-				if (!Level.canUse(u, getLevel())) return;
-				
-				sender.sendMessage(EdgeCore.usageColor + "/credit apply <amount>");
-				sender.sendMessage(EdgeCore.usageColor + "/credit pay <amount>");
-				sender.sendMessage(EdgeCore.usageColor + "/credit info");
-				
-				if (!Level.canUse(u, Level.MODERATOR)) return;
-				
-				sender.sendMessage(EdgeCore.usageColor + "/credit set <account> <amount>");
-				sender.sendMessage(EdgeCore.usageColor + "/credit remove <account>");
-				sender.sendMessage(EdgeCore.usageColor + "/credit pay <account> <amount>");
-				sender.sendMessage(EdgeCore.usageColor + "/credit info <account>");
-			}
-		}
+	public void sendUsageImpl(CommandSender sender) {
+		if (!(sender instanceof Player)) return;
+		
+		sender.sendMessage(EdgeCore.usageColor + "/credit apply <amount>");
+		sender.sendMessage(EdgeCore.usageColor + "/credit pay <amount>");
+		sender.sendMessage(EdgeCore.usageColor + "/credit info");
+		
+		User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
+		
+		if (u != null || !Level.canUse(u, Level.MODERATOR)) return;
+		
+		sender.sendMessage(EdgeCore.usageColor + "/credit set <account> <amount>");
+		sender.sendMessage(EdgeCore.usageColor + "/credit remove <account>");
+		sender.sendMessage(EdgeCore.usageColor + "/credit pay <account> <amount>");
+		sender.sendMessage(EdgeCore.usageColor + "/credit info <account>");
 	}
 	
 	@Override
 	public boolean runImpl(Player player, User user, String[] args) throws Exception {	
 		
 		String userLang = user.getLanguage();
-		
-		if (!Level.canUse(user, getLevel())) {
-			player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
-			return true;
-		}
 		
 		try {
 			

@@ -29,37 +29,26 @@ public class TransferCommand extends AbstractCommand {
 	}
 
 	@Override
-	public void sendUsage(CommandSender sender) {
-		if (sender instanceof Player) {
-			
-			User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
-			
-			if (u != null) {
-				
-				if (!Level.canUse(u, getLevel())) return;
-				
-				sender.sendMessage(EdgeCore.usageColor + "/transfer <to> <amount> <description>");
-				
-				if (!Level.canUse(u, Level.MODERATOR)) return;
-				
-				sender.sendMessage(EdgeCore.usageColor + "/transfer last [<amount>]");
-				
-				if (!Level.canUse(u, Level.ADMIN)) return;
-				
-				sender.sendMessage(EdgeCore.usageColor + "/transfer <from> <to> <amount> <description>");
-			}
-		}
+	public void sendUsageImpl(CommandSender sender) {
+		if (!(sender instanceof Player)) return;
+		
+		sender.sendMessage(EdgeCore.usageColor + "/transfer <to> <amount> <description>");
+		
+		User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
+		
+		if (!Level.canUse(u, Level.MODERATOR)) return;
+		
+		sender.sendMessage(EdgeCore.usageColor + "/transfer last [<amount>]");
+		
+		if (!Level.canUse(u, Level.ADMIN)) return;
+		
+		sender.sendMessage(EdgeCore.usageColor + "/transfer <from> <to> <amount> <description>");
 	}
 	
 	@Override
 	public boolean runImpl(Player player, User user, String[] args) throws Exception {
 		
 		String userLang = user.getLanguage();
-		
-		if (!Level.canUse(user, getLevel())) {
-			player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
-			return true;
-		}
 		
 		try {			
 			
