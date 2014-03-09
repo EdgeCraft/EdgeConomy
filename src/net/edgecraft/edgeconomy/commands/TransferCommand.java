@@ -16,7 +16,15 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class TransferCommand extends AbstractCommand {
-
+	
+	private static final TransferCommand instance = new TransferCommand();
+	
+	private TransferCommand() { super(); }
+	
+	public static final TransferCommand getInstance() {
+		return instance;
+	}
+	
 	@Override
 	public Level getLevel() {
 		return Level.USER;

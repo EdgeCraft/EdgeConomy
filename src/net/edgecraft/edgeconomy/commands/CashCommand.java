@@ -17,6 +17,14 @@ public class CashCommand extends AbstractCommand {
 
 	private final LanguageHandler lang = EdgeCore.getLang();
 	
+	private static final CashCommand instance = new CashCommand();
+	
+	private CashCommand() { super(); }
+	
+	public static final CashCommand getInstance() {
+		return instance;
+	}
+	
 	@Override
 	public Level getLevel() {
 		return Level.USER;

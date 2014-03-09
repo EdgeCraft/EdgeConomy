@@ -20,6 +20,14 @@ public class AccountCommand extends AbstractCommand {
 	
 	private final LanguageHandler lang = EdgeCore.getLang();
 	
+	private static final AccountCommand instance = new AccountCommand();
+	
+	private AccountCommand() { super(); }
+	
+	public static final AccountCommand getInstance() {
+		return instance;
+	}
+	
 	@Override
 	public Level getLevel() {
 		return Level.USER;

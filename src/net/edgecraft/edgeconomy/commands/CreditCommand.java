@@ -18,6 +18,14 @@ public class CreditCommand extends AbstractCommand {
 	
 	private final LanguageHandler lang = EdgeCore.getLang();
 	
+	private static final CreditCommand instance = new CreditCommand();
+	
+	private CreditCommand() { super(); }
+	
+	public static final CreditCommand getInstance() {
+		return instance;
+	}
+	
 	@Override
 	public Level getLevel() {
 		return Level.USER;

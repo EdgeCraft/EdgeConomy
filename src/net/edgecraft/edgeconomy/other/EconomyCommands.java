@@ -13,11 +13,12 @@ public class EconomyCommands extends CommandHandler {
 	
 	private EconomyCommands() {
 		
-		super.registerCommand( new AccountCommand() );
-		super.registerCommand( new CashCommand() );
-		super.registerCommand( new CreditCommand() );
-		super.registerCommand( new TransferCommand() );
-		super.registerCommand( new WelfareCommand() );
+		super.registerCommand( AccountCommand.getInstance() );
+		super.registerCommand( CashCommand.getInstance() );
+		super.registerCommand( CreditCommand.getInstance() );
+		super.registerCommand( TransferCommand.getInstance() );
+		super.registerCommand( WelfareCommand.getInstance() );
+		
 	}
 	
 	public static final EconomyCommands getInstance() {

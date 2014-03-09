@@ -14,7 +14,15 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class WelfareCommand extends AbstractCommand {
-
+	
+	private static final WelfareCommand instance = new WelfareCommand();
+	
+	private WelfareCommand() { super(); }
+	
+	public static final WelfareCommand getInstance() {
+		return instance;
+	}
+	
 	@Override
 	public Level getLevel() {
 		return Level.USER;
