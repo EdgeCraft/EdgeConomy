@@ -11,8 +11,8 @@ import net.edgecraft.edgeconomy.other.EconomySynchronizationTask;
 import net.edgecraft.edgeconomy.transactions.TransactionManager;
 import net.edgecraft.edgecore.EdgeCore;
 import net.edgecraft.edgecore.EdgeCoreAPI;
+import net.edgecraft.edgecore.command.CommandCollection;
 import net.edgecraft.edgecore.command.CommandHandler;
-import net.edgecraft.edgecore.mod.CommandCollection;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;

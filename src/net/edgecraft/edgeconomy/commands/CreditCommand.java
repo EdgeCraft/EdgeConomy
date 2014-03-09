@@ -44,7 +44,7 @@ public class CreditCommand extends AbstractCommand {
 		
 		User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
 		
-		if (u != null || !Level.canUse(u, Level.MODERATOR)) return;
+		if (u == null || !Level.canUse(u, Level.MODERATOR)) return;
 		
 		sender.sendMessage(EdgeCore.usageColor + "/credit set <account> <amount>");
 		sender.sendMessage(EdgeCore.usageColor + "/credit remove <account>");

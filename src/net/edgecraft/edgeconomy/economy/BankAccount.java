@@ -300,6 +300,13 @@ public class BankAccount {
 	 * @throws Exception
 	 */
 	public void updateBalance(double balance) throws Exception {
+		if (getLowestBalance() == 0)
+			updateLowestBalance(balance);
+		else if (balance < getLowestBalance())
+			updateLowestBalance(balance);
+		else if (balance > getHighestBalance())
+			updateHighestBalance(balance);
+		
 		setBalance(balance);
 		update("balance", balance);
 	}

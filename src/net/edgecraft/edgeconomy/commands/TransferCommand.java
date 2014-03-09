@@ -36,11 +36,11 @@ public class TransferCommand extends AbstractCommand {
 		
 		User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
 		
-		if (!Level.canUse(u, Level.MODERATOR)) return;
+		if (u == null || !Level.canUse(u, Level.MODERATOR)) return;
 		
 		sender.sendMessage(EdgeCore.usageColor + "/transfer last [<amount>]");
 		
-		if (!Level.canUse(u, Level.ADMIN)) return;
+		if (u == null || !Level.canUse(u, Level.ADMIN)) return;
 		
 		sender.sendMessage(EdgeCore.usageColor + "/transfer <from> <to> <amount> <description>");
 	}

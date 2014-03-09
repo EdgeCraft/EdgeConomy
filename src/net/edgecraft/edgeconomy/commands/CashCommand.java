@@ -43,7 +43,7 @@ public class CashCommand extends AbstractCommand {
 		
 		User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
 		
-		if (u != null || !Level.canUse(u, Level.MODERATOR)) return;
+		if (u == null || !Level.canUse(u, Level.MODERATOR)) return;
 		
 		sender.sendMessage(EdgeCore.usageColor + "/cash update <user> <amount>");
 		sender.sendMessage(EdgeCore.usageColor + "/cash transfer <from> <to> <amount>");

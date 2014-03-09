@@ -48,7 +48,7 @@ public class AccountCommand extends AbstractCommand {
 		
 		User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
 		
-		if (u != null || !Level.canUse(u, Level.MODERATOR)) return;
+		if (u == null || !Level.canUse(u, Level.MODERATOR)) return;
 		
 		sender.sendMessage(EdgeCore.usageColor + "/account create <user> <balance> <credit>");
 		sender.sendMessage(EdgeCore.usageColor + "/account delete <id>");
