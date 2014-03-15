@@ -8,6 +8,7 @@ import net.edgecraft.edgeconomy.other.ConfigHandler;
 import net.edgecraft.edgeconomy.other.EcoMonitorTask;
 import net.edgecraft.edgeconomy.other.EconomyCommands;
 import net.edgecraft.edgeconomy.other.EconomySynchronizationTask;
+import net.edgecraft.edgeconomy.other.HandleEconomyLogin;
 import net.edgecraft.edgeconomy.transactions.TransactionManager;
 import net.edgecraft.edgecore.EdgeCore;
 import net.edgecraft.edgecore.EdgeCoreAPI;
@@ -63,6 +64,8 @@ public class EdgeConomy extends JavaPlugin {
 	 * Registers data the plugin will use
 	 */
 	private void registerData() {
+		
+		this.getServer().getPluginManager().registerEvents(new HandleEconomyLogin(), this);
 		
 		commands.registerCommand( new CommandCollection( EconomyCommands.getInstance() ) );
 		

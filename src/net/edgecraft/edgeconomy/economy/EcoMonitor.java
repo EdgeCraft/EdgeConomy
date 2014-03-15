@@ -9,6 +9,7 @@ import net.edgecraft.edgecore.lang.LanguageHandler;
 import net.edgecraft.edgecore.user.User;
 import net.edgecraft.edgecuboid.EdgeCuboidAPI;
 import net.edgecraft.edgecuboid.cuboid.Habitat;
+import net.edgecraft.edgecuboid.shop.ShopHandler;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -107,11 +108,13 @@ public class EcoMonitor {
 			vehicle.setScore(5);
 			
 			// Set property score
+			final double propertyTaxes = (habitat == null ? 0 : habitat.getTaxes()) + (ShopHandler.getInstance().getShop(p.getName()) == null ? 0 :  ShopHandler.getInstance().getShop(p.getName()).getTaxes());
+			
 			final Score propertyTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_property_title")));
-			final Score property = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_property_value").replace("[0]", habitat == null ? "0" : habitat.getTaxes() + "")));
+			final Score property = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_property_value").replace("[0]", propertyTaxes + "")));
 			propertyTitle.setScore(4);
 			property.setScore(3);
-			acc.updateBalance(acc.getBalance() - (habitat == null ? 0 : habitat.getTaxes()));
+			acc.updateBalance(acc.getBalance() - propertyTaxes);
 			
 			// Set state score
 			final Score stateTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_state_title")));

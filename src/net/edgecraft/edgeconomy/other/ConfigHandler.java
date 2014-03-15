@@ -31,9 +31,9 @@ public class ConfigHandler {
 		setConfig(getPlugin().getConfig());
 		
 		// General
-		getConfig().addDefault("General.IntervalInMinutes", 25);
+		getConfig().addDefault("General.IntervalInMinutes", 45);
 		getConfig().addDefault("General.AllowAccounts", true);
-		getConfig().addDefault("General.AutoCreateAccounts", true);	
+		getConfig().addDefault("General.AutoCreateAccounts", false);	
 		getConfig().addDefault("General.MaxCashDistance", 5);
 		getConfig().addDefault("General.MaxATMAmount", 2000.0D);
 		getConfig().addDefault("General.MonitoredAmount", 3500.0D);
@@ -41,16 +41,16 @@ public class ConfigHandler {
 		
 		// Economy
 		getConfig().addDefault("Economy.State", "EdgeCraft");		
-		getConfig().addDefault("Economy.DefaultCash", 0.0D);
+		getConfig().addDefault("Economy.DefaultCash", 10.0D);
 		getConfig().addDefault("Economy.DefaultWelfare", 400.0D);
 		getConfig().addDefault("Economy.MaxWelfareBalance", 3500.0D);	
 		
 		// Economy Fees
 		getConfig().addDefault("Economy.TransferFee", 0.1D);
 		getConfig().addDefault("Economy.WithdrawalFee", 0.1D);
-		getConfig().addDefault("Economy.CreditFee", 0.4D);
-		getConfig().addDefault("Economy.PaydayBonus", 0.2D);
-		getConfig().addDefault("Economy.StateTax", 0.6D);
+		getConfig().addDefault("Economy.CreditFee", 0.3D);
+		getConfig().addDefault("Economy.PaydayBonus", 0.3D);
+		getConfig().addDefault("Economy.StateTax", 0.4D);
 		
 		getConfig().options().copyDefaults(true);
 		getPlugin().saveConfig();
