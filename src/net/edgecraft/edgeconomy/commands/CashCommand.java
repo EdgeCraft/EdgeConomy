@@ -55,7 +55,6 @@ public class CashCommand extends AbstractCommand {
 		
 		sender.sendMessage(EdgeCore.usageColor + "/cash update <user> <amount>");
 		sender.sendMessage(EdgeCore.usageColor + "/cash transfer <from> <to> <amount>");
-		sender.sendMessage(EdgeCore.usageColor + "/cash reload [<user>]");
 	}
 	
 	@Override

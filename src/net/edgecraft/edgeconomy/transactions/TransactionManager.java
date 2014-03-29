@@ -81,7 +81,7 @@ public class TransactionManager {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public void syncTransactionss() {
+	public void syncTransactions() {
 		
 		String tempFile = EdgeConomy.getInstance().getDataFolder() + "src/transactions.tmp";
 		

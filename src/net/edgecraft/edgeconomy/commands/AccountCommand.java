@@ -108,12 +108,60 @@ public class AccountCommand extends AbstractCommand {
 			}
 			
 			if (args[1].equalsIgnoreCase("apply")) {
-				player.sendMessage(lang.getColoredMessage(userLang, "pluginexception").replace("[0]", "EdgeCuboid"));
+				if (args.length != 2) {
+					sendUsage(player);
+					return true;
+				}
+				
+				if (EdgeConomy.getEconomy().hasAccount(user.getID())) {
+					player.sendMessage(lang.getColoredMessage(userLang, "acc_apply_alreadyacc"));
+					return true;
+				}
+				
+				Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
+				
+				if (cuboid == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
+					return true;
+				}
+				
+				if (CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
+					return true;
+				}
+				
+				EdgeConomy.getEconomy().registerAccount(user.getID(), 500D, 0);
+				player.sendMessage(lang.getColoredMessage(userLang, "acc_apply_success").replace("[0]", EdgeConomy.getEconomy().getAccount(player.getName()).getID() + ""));
+				
 				return true;
 			}
 			
 			if (args[1].equalsIgnoreCase("deactivate")) {
-				player.sendMessage(lang.getColoredMessage(userLang, "pluginexception").replace("[0]", "EdgeCuboid"));
+				if (args.length != 2) {
+					sendUsage(player);
+					return true;
+				}
+				
+				if (!EdgeConomy.getEconomy().hasAccount(user.getID())) {
+					player.sendMessage(lang.getColoredMessage(userLang, "noaccount"));
+					return true;
+				}
+				
+				Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
+				
+				if (cuboid == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
+					return true;
+				}
+				
+				if (CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
+					return true;
+				}
+				
+				EdgeConomy.getEconomy().deleteAccount(EdgeConomy.getEconomy().getAccount(player.getName()).getID());
+				player.sendMessage(lang.getColoredMessage(userLang, "acc_deactivate_success").replace("[0]", EdgeConomy.getEconomy().getAccount(player.getName()).getID() + ""));
+				
 				return true;
 			}
 			
@@ -134,13 +182,8 @@ public class AccountCommand extends AbstractCommand {
 				Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
 				EconomyPlayer ep = acc.getEconomyPlayer();
 				
-				if (cuboid == null) {
-					player.sendMessage(lang.getColoredMessage(userLang, "eco_nocuboid"));
-					return true;
-				}
-				
-				if (CuboidType.getType(cuboid.getCuboidType()) != CuboidType.ATM || CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
-					player.sendMessage(lang.getColoredMessage(userLang, "eco_nocuboid"));
+				if (cuboid == null || CuboidType.getType(cuboid.getCuboidType()) != CuboidType.ATM || CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "ATM / Bank"));
 					return true;
 				}
 				

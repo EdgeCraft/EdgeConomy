@@ -68,8 +68,37 @@ public class CreditCommand extends AbstractCommand {
 		try {
 			
 			if (args[1].equalsIgnoreCase("apply")) {
+				if (args.length != 3) {
+					sendUsage(player);
+					return true;
+				}
 				
-				player.sendMessage(lang.getColoredMessage(userLang, "pluginexception").replace("[0]", "EdgeCuboid"));
+				BankAccount acc = EdgeConomy.getEconomy().getAccount(user.getName());
+				
+				if (acc == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "noaccount"));
+					return true;
+				}
+				
+				Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
+				
+				if (cuboid == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
+					return true;
+				}
+				
+				if (CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
+					return true;
+				}
+				
+				if (acc.getRawCredit() > 0.0D) {
+					player.sendMessage(lang.getColoredMessage(userLang, "credit_apply_alreadycredit"));
+					return true;
+				}
+				
+				acc.updateCredit(Double.parseDouble(args[2]));
+				player.sendMessage(lang.getColoredMessage(userLang, "credit_apply_success").replace("[0]", args[2]));
 				
 				return true;
 			}

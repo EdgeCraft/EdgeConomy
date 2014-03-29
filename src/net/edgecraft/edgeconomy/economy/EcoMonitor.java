@@ -80,25 +80,28 @@ public class EcoMonitor {
 			
 			// Set position and title of the scoreboard
 			obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-			obj.setDisplayName(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_title"));
+			obj.setDisplayName(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_title")); 
+			
+			double welfare = acc.hasWelfare() ? Economy.getDefaultWelfare() : 0;
 			
 			// Set payday score
 			final Score paydayTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_payday_title")));
 			final Score payday;
 			if (!acc.isClosed())
-				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_payday_value").replace("[0]", acc.getPayday() + "")));
+				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_payday_value").replace("[0]", (acc.getPayday() + welfare) + "")));
 			else
-				payday = obj.getScore(Bukkit.getOfflinePlayer("§cKonto geschlossen!"));
+				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "acc_closed")));
 			
 			paydayTitle.setScore(10);
 			payday.setScore(9);
-			acc.updateBalance(acc.getBalance() + acc.getPayday());
+			acc.updateBalance(acc.getBalance() + (acc.getPayday() + welfare));
 			
 			// Set credit score
 			final Score creditTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_credit_title")));
 			final Score credit = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_credit_value").replace("[0]", acc.getCredit() + "")));
 			creditTitle.setScore(8);
 			credit.setScore(7);
+			p.sendMessage("DEBUG: " + acc.getCredit() + " credit, raw: " + acc.getRawCredit());
 			acc.updateBalance(acc.getBalance() - (acc.getCredit() / 100 * 0.2));
 			
 			// Set vehicle score
@@ -133,7 +136,7 @@ public class EcoMonitor {
 			Bukkit.getScheduler().scheduleSyncDelayedTask(EdgeConomy.getInstance(), new Runnable() {
 				
 				public void run() {
-					// Reset scoreboard after 5 sec
+					// Reset scoreboard after 10 sec
 					p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
 				}
 				
@@ -188,13 +191,15 @@ public class EcoMonitor {
 			obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 			obj.setDisplayName(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_title"));
 			
+			double welfare = acc.hasWelfare() ? Economy.getDefaultWelfare() : 0;
+			
 			// Set payday score
 			final Score paydayTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_payday_title")));
 			final Score payday;
 			if (!acc.isClosed())
-				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_payday_value").replace("[0]", acc.getPayday() + "")));
+				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_payday_value").replace("[0]", (acc.getPayday() + welfare) + "")));
 			else
-				payday = obj.getScore(Bukkit.getOfflinePlayer("§cKonto geschlossen!"));
+				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "acc_closed")));
 			
 			paydayTitle.setScore(10);
 			payday.setScore(9);
@@ -237,7 +242,7 @@ public class EcoMonitor {
 			Bukkit.getScheduler().scheduleSyncDelayedTask(EdgeConomy.getInstance(), new Runnable() {
 				
 				public void run() {
-					// Reset scoreboard after 5 sec
+					// Reset scoreboard after 10 sec
 					p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
 				}
 				

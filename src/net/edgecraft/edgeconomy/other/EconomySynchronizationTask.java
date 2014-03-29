@@ -13,6 +13,7 @@ public class EconomySynchronizationTask extends BukkitRunnable {
 		
 		EdgeConomy.log.info(EdgeConomy.ecobanner + "Starte Economy-Synchronisation..");
 		EdgeConomy.getEconomy().synchronizeEconomy(true, true);
+		EdgeConomy.getTransactions().syncTransactions();
 		EdgeConomy.log.info(EdgeConomy.ecobanner + "Automatische Economy-Synchronisation abgeschlossen!");
 		
 	}

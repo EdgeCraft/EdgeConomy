@@ -56,8 +56,6 @@ public class EdgeConomy extends JavaPlugin {
 		
 		this.config.loadConfig();
 		this.config.update();
-		
-		economy.synchronizeEconomy(true, true);
 	}
 	
 	/**
