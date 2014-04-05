@@ -1,5 +1,6 @@
 package net.edgecraft.edgeconomy.transactions;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
@@ -10,7 +11,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import net.edgecraft.edgeconomy.EdgeConomy;
 import net.edgecraft.edgeconomy.economy.BankAccount;
 
 public class TransactionManager {
@@ -83,7 +83,7 @@ public class TransactionManager {
 	@SuppressWarnings("unchecked")
 	public void syncTransactions() {
 		
-		String tempFile = EdgeConomy.getInstance().getDataFolder() + "src/transactions.tmp";
+		File tempFile = new File("plugins/EdgeConomy/transactions.tmp");
 		
 		try {
 			

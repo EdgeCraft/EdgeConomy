@@ -12,7 +12,7 @@ import net.edgecraft.edgeconomy.other.HandleEconomyLogin;
 import net.edgecraft.edgeconomy.transactions.TransactionManager;
 import net.edgecraft.edgecore.EdgeCore;
 import net.edgecraft.edgecore.EdgeCoreAPI;
-import net.edgecraft.edgecore.command.CommandCollection;
+import net.edgecraft.edgecore.command.CommandContainer;
 import net.edgecraft.edgecore.command.CommandHandler;
 
 import org.bukkit.plugin.java.JavaPlugin;
@@ -65,7 +65,7 @@ public class EdgeConomy extends JavaPlugin {
 		
 		this.getServer().getPluginManager().registerEvents(new HandleEconomyLogin(), this);
 		
-		commands.registerCommand( new CommandCollection( EconomyCommands.getInstance() ) );
+		commands.registerCommand( new CommandContainer( EconomyCommands.getInstance() ) );
 		
 		@SuppressWarnings("unused") BukkitTask ecoTask = new EconomySynchronizationTask().runTaskTimer(this, 0, 20L * 60 * 10);
 		@SuppressWarnings("unused") BukkitTask monitorTask = new EcoMonitorTask().runTaskTimer(this, 0, 20L * 60 * Economy.getPaydayInterval());

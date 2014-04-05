@@ -44,11 +44,11 @@ public class TransferCommand extends AbstractCommand {
 		
 		User u = EdgeCoreAPI.userAPI().getUser(sender.getName());
 		
-		if (u == null || !Level.canUse(u, Level.MODERATOR)) return;
+		if (u == null || !Level.canUse(u, Level.SUPPORTER)) return;
 		
 		sender.sendMessage(EdgeCore.usageColor + "/transfer last [<amount>]");
 		
-		if (u == null || !Level.canUse(u, Level.ADMIN)) return;
+		if (u == null || !Level.canUse(u, Level.MODERATOR)) return;
 		
 		sender.sendMessage(EdgeCore.usageColor + "/transfer <from> <to> <amount> <description>");
 	}
@@ -63,8 +63,13 @@ public class TransferCommand extends AbstractCommand {
 			// /transfer <to> <amount> <description>
 			if (args.length == 4) {
 				
+				if (!users.exists(args[1])) {
+					player.sendMessage(lang.getColoredMessage(user.getLang(), "notfound"));
+					return true;
+				}
+				
 				doTransaction(EdgeConomy.getEconomy()
-						.getAccount(user.getName()), EdgeConomy.getEconomy().getAccount(Integer.parseInt(args[1])), Double.parseDouble(args[2]), args[3], player, user);	
+						.getAccount(user.getName()), EdgeConomy.getEconomy().getAccount(args[1]), Double.parseDouble(args[2]), args[3], player, user);	
 				
 				return true;
 				
@@ -73,6 +78,11 @@ public class TransferCommand extends AbstractCommand {
 			// /transfer <from> <to> <amount> <description>
 			if (args.length == 5) {
 			
+				if (!users.exists(args[1])) {
+					player.sendMessage(lang.getColoredMessage(user.getLang(), "notfound"));
+					return true;
+				}
+				
 				doTransaction(EdgeConomy.getEconomy()
 						.getAccount(Integer.parseInt(args[1])), EdgeConomy.getEconomy().getAccount(Integer.parseInt(args[2])), Double.parseDouble(args[3]), args[4], player, user);
 				
@@ -81,7 +91,7 @@ public class TransferCommand extends AbstractCommand {
 			
 			if (args[1].equalsIgnoreCase("last")) {
 				if (args.length == 2) {
-					if(!Level.canUse(user, Level.MODERATOR)) {
+					if(!Level.canUse(user, Level.SUPPORTER)) {
 						player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
 						return true;
 					}
@@ -92,7 +102,7 @@ public class TransferCommand extends AbstractCommand {
 				}
 				
 				if (args.length == 3) {
-					if (!Level.canUse(user, Level.ADMIN)) {
+					if (!Level.canUse(user, Level.MODERATOR)) {
 						player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
 						return true;
 					}
@@ -134,8 +144,13 @@ public class TransferCommand extends AbstractCommand {
 	}
 	
 	private void doTransaction(BankAccount from, BankAccount to, double amount, String description, Player sender, User user) {
-		if (from == null || to == null) {
-			sendUsage(sender);
+		if (from == null) {
+			sender.sendMessage(lang.getColoredMessage(user.getLang(), "noaccount"));
+			return;
+		}
+		
+		if (to == null) {
+			sender.sendMessage(lang.getColoredMessage(user.getLang(), "notfound"));
 			return;
 		}
 		
@@ -162,7 +177,7 @@ public class TransferCommand extends AbstractCommand {
 				for (User u : EdgeCoreAPI.userAPI().getUsers().values()) {
 					if (u == null || !u.getPlayer().isOnline()) continue;
 					
-					if (Level.canUse(u, Level.MODERATOR)) {
+					if (Level.canUse(u, Level.SUPPORTER)) {
 						u.getPlayer().sendMessage(lang.getColoredMessage(user.getLanguage(), "transaction_highamount").replace("[0]", from.getOwner()).replace("[1]", to.getOwner()).replace("[2]", amount + ""));
 					}
 				}

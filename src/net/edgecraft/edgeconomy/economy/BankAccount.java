@@ -193,13 +193,28 @@ public class BankAccount {
 	/**
 	 * Sets the accounts' balance
 	 * @param balance
+	 * @throws Exception 
 	 */
-	protected void setBalance(double balance) {		
-		DecimalFormat df = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
-		df.applyPattern("0.00");
-		
-		this.balance = Double.valueOf(df.format(balance));
-		updatePayday();
+	protected void setBalance(double balance) {
+		try {
+			
+			DecimalFormat df = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
+			df.applyPattern("0.00");
+			
+			this.balance = Double.valueOf(df.format(balance));
+			
+			if (getLowestBalance() == 0)
+				updateLowestBalance(this.balance);
+			else if (balance < getLowestBalance())
+				updateLowestBalance(this.balance);
+			else if (balance > getHighestBalance())
+				updateHighestBalance(this.balance);
+			
+			updatePayday();
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -280,7 +295,7 @@ public class BankAccount {
 	 */
 	private void update(String var, Object obj) throws Exception {
 		if (var != null && obj != null) {
-			this.db.prepareUpdate("UPDATE " + Economy.accountTable + " SET " + var + " = '" + obj.toString() + "' WHERE id = '" + this.id + "';").executeUpdate();
+			this.db.prepareStatement("UPDATE " + Economy.accountTable + " SET " + var + " = '" + obj.toString() + "' WHERE id = '" + this.id + "';").executeUpdate();
 		}
 	}
 	
@@ -299,14 +314,7 @@ public class BankAccount {
 	 * @param balance
 	 * @throws Exception
 	 */
-	public void updateBalance(double balance) throws Exception {
-		if (getLowestBalance() == 0)
-			updateLowestBalance(balance);
-		else if (balance < getLowestBalance())
-			updateLowestBalance(balance);
-		else if (balance > getHighestBalance())
-			updateHighestBalance(balance);
-		
+	public void updateBalance(double balance) throws Exception {		
 		setBalance(balance);
 		update("balance", balance);
 	}

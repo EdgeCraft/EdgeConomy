@@ -118,7 +118,7 @@ public class AccountCommand extends AbstractCommand {
 					return true;
 				}
 				
-				Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
+				Cuboid cuboid = Cuboid.getCuboid(player.getEyeLocation());
 				
 				if (cuboid == null) {
 					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
@@ -147,7 +147,7 @@ public class AccountCommand extends AbstractCommand {
 					return true;
 				}
 				
-				Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
+				Cuboid cuboid = Cuboid.getCuboid(player.getEyeLocation());
 				
 				if (cuboid == null) {
 					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
@@ -168,7 +168,7 @@ public class AccountCommand extends AbstractCommand {
 			if (args[1].equalsIgnoreCase("deposit")) {
 				if (args.length != 3) {
 					sendUsage(player);
-					return false;
+					return true;
 				}
 				
 				double amount = Double.parseDouble(args[2]);
@@ -179,10 +179,15 @@ public class AccountCommand extends AbstractCommand {
 					return true;
 				}
 				
-				Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
+				Cuboid cuboid = Cuboid.getCuboid(player.getEyeLocation());
 				EconomyPlayer ep = acc.getEconomyPlayer();
 				
-				if (cuboid == null || CuboidType.getType(cuboid.getCuboidType()) != CuboidType.ATM || CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
+				if (cuboid == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "ATM / Bank"));
+					return true;
+				}
+				
+				if (cuboid.getCuboidType() != CuboidType.ATM.getTypeID() || cuboid.getCuboidType() != CuboidType.Bank.getTypeID()) {
 					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "ATM / Bank"));
 					return true;
 				}
@@ -218,7 +223,7 @@ public class AccountCommand extends AbstractCommand {
 			if (args[1].equalsIgnoreCase("withdraw")) {
 				if (args.length != 3) {
 					sendUsage(player);
-					return false;
+					return true;
 				}
 				
 				double amount = Double.parseDouble(args[2]);
@@ -230,10 +235,15 @@ public class AccountCommand extends AbstractCommand {
 				}
 				
 				EconomyPlayer ep = acc.getEconomyPlayer();
-				Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
+				Cuboid cuboid = Cuboid.getCuboid(player.getEyeLocation());
 				
 				if (cuboid == null) {
-					player.sendMessage(lang.getColoredMessage(userLang, "eco_nocuboid"));
+					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "ATM / Bank"));
+					return true;
+				}
+				
+				if (cuboid.getCuboidType() != CuboidType.ATM.getTypeID() || cuboid.getCuboidType() != CuboidType.Bank.getTypeID()) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "ATM / Bank"));
 					return true;
 				}
 				
@@ -257,32 +267,19 @@ public class AccountCommand extends AbstractCommand {
 					return true;
 				}
 				
-				if (CuboidType.getType(cuboid.getCuboidType()) != CuboidType.ATM || CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
-					player.sendMessage(lang.getColoredMessage(userLang, "eco_nocuboid"));
+				if (amount >= Economy.getMaxATMAmount() && cuboid.getCuboidType() == CuboidType.ATM.getTypeID()) {
+					player.sendMessage(lang.getColoredMessage(userLang, "withdraw_needbank").replace("[0]", Economy.getMaxATMAmount() + ""));
 					return true;
 				}
+					
+				double withdrawalFee = (int) (acc.getBalance() / 100 * Economy.getWithdrawalFee());
 				
-				if (CuboidType.getType(cuboid.getCuboidType()) == CuboidType.ATM) {
-					
-					if (amount > Economy.getMaxATMAmount() && CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
-						player.sendMessage(lang.getColoredMessage(userLang, "withdraw_needbank").replace("[0]", Economy.getMaxATMAmount() + ""));
-						return true;
-					}
-					
-					if (amount > Economy.getMonitoredAmount()) {
-						player.sendMessage(lang.getColoredMessage(userLang, "amounttoohigh"));
-						return true;
-					}
-					
-					double withdrawalFee = (int) (acc.getBalance() / 100 * Economy.getWithdrawalFee());
-										
-					ep.updateCash(ep.getCash() + amount);
-					acc.updateBalance(acc.getBalance() - (amount + withdrawalFee));
-					
-					player.sendMessage(lang.getColoredMessage(userLang, "acc_withdraw_success").replace("[0]", amount + ""));
-					
-					return true;
-				}
+				ep.updateCash(ep.getCash() + amount);
+				acc.updateBalance(acc.getBalance() - (amount + withdrawalFee));
+				
+				player.sendMessage(lang.getColoredMessage(userLang, "acc_withdraw_success").replace("[0]", amount + ""));
+				
+				return true;
 			}
 			
 			if (args[1].equalsIgnoreCase("create")) {

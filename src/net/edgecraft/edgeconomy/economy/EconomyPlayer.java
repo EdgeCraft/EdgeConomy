@@ -107,7 +107,7 @@ public class EconomyPlayer {
 	 */
 	private void update(String var, Object obj) throws Exception {
 		if (var != null && obj != null) {
-			this.db.prepareUpdate("UPDATE " + Economy.ecoPlayerTable + " SET " + var + " = '" + obj.toString() + "' WHERE id = '" + id + "';").executeUpdate();
+			this.db.prepareStatement("UPDATE " + Economy.ecoPlayerTable + " SET " + var + " = '" + obj.toString() + "' WHERE id = '" + id + "';").executeUpdate();
 		}
 	}
 	
@@ -157,7 +157,7 @@ public class EconomyPlayer {
 	 * @throws Exception
 	 */
 	public void setWelfare(boolean var) throws Exception {
-		if (!checkWelfare()) return;
+		if (!checkWelfare()) var = false;
 		
 		setWelfareStatus(var);
 		

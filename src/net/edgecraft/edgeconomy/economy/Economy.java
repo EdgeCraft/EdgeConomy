@@ -68,7 +68,7 @@ public class Economy {
 			
 			int id = generateAccountID();
 			
-			PreparedStatement registerAccount = db.prepareUpdate("INSERT INTO " + Economy.accountTable + " (id, ownerID, balance, lowestbalance, highestbalance, credit, paidcredit, closed, reason) "
+			PreparedStatement registerAccount = db.prepareStatement("INSERT INTO " + Economy.accountTable + " (id, ownerID, balance, lowestbalance, highestbalance, credit, paidcredit, closed, reason) "
 					+ "VALUES (?, ?, ?, '0', '0', ?, '0', DEFAULT, DEFAULT);");
 			
 			registerAccount.setInt(1, id);
@@ -77,6 +77,7 @@ public class Economy {
 			registerAccount.setDouble(4, credit);
 			registerAccount.executeUpdate();
 			
+			synchronizeEconomyPlayer(ownerID);
 			synchronizeAccount(id);
 			
 		} catch(Exception e) {
@@ -96,7 +97,7 @@ public class Economy {
 			
 			int id = generateEconomyPlayerID();
 			
-			PreparedStatement registerEP = db.prepareUpdate("INSERT INTO " + Economy.ecoPlayerTable + " (id, cash, totalgiven, totalreceived, totaldonated, welfare) VALUES (?, ?, '0', '0', '0', DEFAULT);");
+			PreparedStatement registerEP = db.prepareStatement("INSERT INTO " + Economy.ecoPlayerTable + " (id, cash, totalgiven, totalreceived, totaldonated, welfare) VALUES (?, ?, '0', '0', '0', DEFAULT);");
 			registerEP.setInt(1, id);
 			registerEP.setDouble(2, getDefaultCash());
 			registerEP.executeUpdate();
@@ -118,7 +119,7 @@ public class Economy {
 		
 		try {
 			
-			PreparedStatement deleteAccount = db.prepareUpdate("DELETE FROM " + Economy.accountTable + " WHERE id = '" + id + "';");
+			PreparedStatement deleteAccount = db.prepareStatement("DELETE FROM " + Economy.accountTable + " WHERE id = '" + id + "';");
 			deleteAccount.executeUpdate();
 			
 			Economy.accounts.remove(id);
@@ -133,7 +134,7 @@ public class Economy {
 		
 		try {
 			
-			PreparedStatement deleteEP = db.prepareUpdate("DELETE FROM " + Economy.ecoPlayerTable + " WHERE id = '" + id + "';");
+			PreparedStatement deleteEP = db.prepareStatement("DELETE FROM " + Economy.ecoPlayerTable + " WHERE id = '" + id + "';");
 			deleteEP.executeUpdate();
 			
 		} catch(Exception e) {
@@ -290,6 +291,9 @@ public class Economy {
 						
 					} else if(entry.getKey().equals("credit")) {
 						acc.setCredit(Double.valueOf(entry.getValue().toString()));
+						
+					} else if(entry.getKey().equals("paidcredit")) {
+						acc.setPaidCredit(Double.valueOf(entry.getValue().toString()));
 						
 					} else if(entry.getKey().equals("closed")) {
 						boolean b = ((Boolean) entry.getValue()).booleanValue();
