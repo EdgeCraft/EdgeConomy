@@ -41,9 +41,9 @@ public class ConfigHandler {
 		
 		// Economy
 		getConfig().addDefault("Economy.State", "EdgeCraft");		
-		getConfig().addDefault("Economy.DefaultCash", 10.0D);
-		getConfig().addDefault("Economy.DefaultWelfare", 400.0D);
-		getConfig().addDefault("Economy.MaxWelfareBalance", 3500.0D);	
+		getConfig().addDefault("Economy.StartCashAmount", 10.0D);
+		getConfig().addDefault("Economy.WelfareAmount", 400.0D);
+		getConfig().addDefault("Economy.MaxWelfareAmount", 3500.0D);	
 		
 		// Economy Fees
 		getConfig().addDefault("Economy.TransferFee", 0.1D);
@@ -69,15 +69,15 @@ public class ConfigHandler {
 		Economy.setAutoCreateAccounts(getConfig().getBoolean("General.AutoCreateAccounts"));
 		
 		Economy.setPaydayInterval(getConfig().getInt("General.IntervalInMinutes"));
-		Economy.setMaxCashDistance(getConfig().getInt("General.MaxCashDistance"));
+		Economy.setCashRadius(getConfig().getInt("General.MaxCashDistance"));
 		Economy.setMaxATMAmount(getConfig().getDouble("General.MaxATMAmount"));
 		Economy.setMonitoredAmount(getConfig().getDouble("General.MonitoredAmount"));
 		
 		Economy.setState(getConfig().getString("Economy.State"));
 		Economy.setCurrency(EdgeCore.getCurrency());
-		Economy.setDefaultCash(getConfig().getDouble("Economy.DefaultCash"));
-		Economy.setDefaultWelfare(getConfig().getDouble("Economy.DefaultWelfare"));
-		Economy.setMaxWelfareBalance(getConfig().getDouble("Economy.MaxWelfareBalance"));
+		Economy.setDefaultCashAmount(getConfig().getDouble("Economy.StartCashAmount"));
+		Economy.setWelfareAmount(getConfig().getDouble("Economy.WelfareAmount"));
+		Economy.setMaxWelfareAmount(getConfig().getDouble("Economy.MaxWelfareAmount"));
 		
 		Economy.setTransferFee(getConfig().getDouble("Economy.TransferFee"));
 		Economy.setWithdrawalFee(getConfig().getDouble("Economy.WithdrawalFee"));

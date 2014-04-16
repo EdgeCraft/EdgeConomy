@@ -33,7 +33,7 @@ public class HandleEconomyLogin implements Listener {
 			if (economy.existsEconomyPlayer(player.getName()))
 				return;
 			
-			economy.registerEconomyPlayer(player.getName());
+			economy.registerEconomyPlayer(user.getUUID());
 			player.sendMessage(lang.getColoredMessage(user.getLanguage(), "registration_eco_success"));
 			
 		} catch(Exception e) {
@@ -58,11 +58,11 @@ public class HandleEconomyLogin implements Listener {
 			
 			if (Economy.isAutoCreateAccounts()) {
 				
-				if (economy.hasAccount(user.getID()))
+				if (economy.hasAccount(user))
 					return;
 				
-				economy.registerAccount(user.getID(), 500D, 0);
-				player.sendMessage(lang.getColoredMessage(user.getLanguage(), "acc_apply_success").replace("[0]", economy.getAccount(player.getName()).getID() + ""));
+				economy.registerAccount(user.getUUID(), 500D, 0);
+				player.sendMessage(lang.getColoredMessage(user.getLanguage(), "acc_apply_success").replace("[0]", economy.getAccount(user).getId() + ""));
 				
 			} else {
 				

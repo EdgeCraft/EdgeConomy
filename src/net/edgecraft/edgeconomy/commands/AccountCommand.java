@@ -1,6 +1,5 @@
 package net.edgecraft.edgeconomy.commands;
 
-import net.edgecraft.edgeconomy.EdgeConomy;
 import net.edgecraft.edgeconomy.economy.BankAccount;
 import net.edgecraft.edgeconomy.economy.Economy;
 import net.edgecraft.edgeconomy.economy.EconomyPlayer;
@@ -8,17 +7,14 @@ import net.edgecraft.edgecore.EdgeCore;
 import net.edgecraft.edgecore.EdgeCoreAPI;
 import net.edgecraft.edgecore.command.AbstractCommand;
 import net.edgecraft.edgecore.command.Level;
-import net.edgecraft.edgecore.lang.LanguageHandler;
 import net.edgecraft.edgecore.user.User;
-import net.edgecraft.edgecuboid.cuboid.Cuboid;
-import net.edgecraft.edgecuboid.cuboid.types.CuboidType;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class AccountCommand extends AbstractCommand {
 	
-	private final LanguageHandler lang = EdgeCore.getLang();
+	private final Economy economy = Economy.getInstance();
 	
 	private static final AccountCommand instance = new AccountCommand();
 	
@@ -35,7 +31,7 @@ public class AccountCommand extends AbstractCommand {
 	
 	@Override
 	public String[] getNames() {
-		String[] names = { "account", "acc" } ;
+		String[] names = { "account", "acc", "konto" } ;
 		return names;
 	}
 	
@@ -58,35 +54,205 @@ public class AccountCommand extends AbstractCommand {
 		
 		if (u == null || !Level.canUse(u, Level.MODERATOR)) return;
 		
-		sender.sendMessage(EdgeCore.usageColor + "/account create <user> <balance> <credit>");
-		sender.sendMessage(EdgeCore.usageColor + "/account delete <id>");
-		sender.sendMessage(EdgeCore.usageColor + "/account updatebalance <id> <amount>");
-		sender.sendMessage(EdgeCore.usageColor + "/account lock <id>");
-		sender.sendMessage(EdgeCore.usageColor + "/account unlock <id>");
-		sender.sendMessage(EdgeCore.usageColor + "/account exists <id>");
-		sender.sendMessage(EdgeCore.usageColor + "/account reload [<id>]");
+		sender.sendMessage(EdgeCore.usageColor + "/account delete <user>");
+		sender.sendMessage(EdgeCore.usageColor + "/account updatebalance <user> <amount>");
+		sender.sendMessage(EdgeCore.usageColor + "/account lock <user>");
+		sender.sendMessage(EdgeCore.usageColor + "/account unlock <user>");
+		sender.sendMessage(EdgeCore.usageColor + "/account exists <user>");
+		sender.sendMessage(EdgeCore.usageColor + "/account reload [<user>]");
 		sender.sendMessage(EdgeCore.usageColor + "/account amount");
 	}
 	
 	@Override
 	public boolean runImpl(Player player, User user, String[] args) throws Exception {
 		
-		String userLang = user.getLanguage();
+		String userLang = user.getLang();
+		
 		
 		try {
+						
+			if (args[1].equalsIgnoreCase("delete")) {
+				if (args.length != 3) {
+					sendUsage(player);
+					return true;
+				}
+				
+				if (!EdgeCoreAPI.userAPI().exists(args[2])) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notfound"));
+					return true;
+				}
+				
+				if (!economy.hasAccount(EdgeCoreAPI.userAPI().getUser(args[2]))) {
+					player.sendMessage(lang.getColoredMessage(userLang, "noaccount_user").replace("[0]", args[2]));
+					return true;
+				}
+				
+				economy.deleteAccount(economy.getAccount(EdgeCoreAPI.userAPI().getUser(args[2])).getId());
+				player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_delete_success").replace("[0]", args[2]));
+				
+				return true;
+			}
 			
+			if (args[1].equalsIgnoreCase("updatebalance")) {
+				if (args.length != 4) {
+					sendUsage(player);
+					return true;
+				}
+				
+				if (!EdgeCoreAPI.userAPI().exists(args[2])) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notfound"));
+					return true;
+				}
+				
+				BankAccount acc = getAccount(EdgeCoreAPI.userAPI().getUser(args[2]));
+				
+				if (acc == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "noaccount_user").replace("[0]", args[2]));
+					return true;
+				}
+				
+				if (acc.isClosed()) {
+					player.sendMessage(lang.getColoredMessage(userLang, "account_closed_user").replace("[0]", args[2]));
+					return true;
+				}
+				
+				double balance = Double.parseDouble(args[3]);
+				
+				if (balance <= 0) {
+					player.sendMessage(lang.getColoredMessage(userLang, "amounttoolow"));
+					return true;
+				}
+				
+				acc.updateBalance(balance);
+				player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_updatebalance_success").replace("[0]", args[2]).replace("[1]", balance + ""));
+				
+				return true;
+			}
+			
+			if (args[1].equalsIgnoreCase("lock")) {
+				if (args.length != 3) {
+					sendUsage(player);
+					return true;
+				}
+				
+				if (!EdgeCoreAPI.userAPI().exists(args[2])) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notfound"));
+					return true;
+				}
+				
+				BankAccount acc = getAccount(EdgeCoreAPI.userAPI().getUser(args[2]));
+				
+				if (acc == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "noaccount_user").replace("[0]", args[2]));
+					return true;
+				}
+				
+				acc.setClosed(true);
+				player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_status_locked").replace("[0]", args[2]));
+				
+				return true;
+			}
+			
+			if (args[1].equalsIgnoreCase("unlock")) {
+				if (args.length != 3) {
+					sendUsage(player);
+					return true;
+				}
+				
+				if (!EdgeCoreAPI.userAPI().exists(args[2])) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notfound"));
+					return true;
+				}
+				
+				BankAccount acc = getAccount(EdgeCoreAPI.userAPI().getUser(args[2]));
+				
+				if (acc == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "noaccount_user").replace("[0]", args[2]));
+					return true;
+				}
+				
+				acc.setClosed(false);
+				player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_status_unlocked").replace("[0]", args[2]));
+				
+				return true;
+			}
+			
+			if (args[1].equalsIgnoreCase("exists")) {
+				if (args.length != 3) {
+					sendUsage(player);
+					return true;
+				}
+				
+				if (!EdgeCoreAPI.userAPI().exists(args[2])) {
+					player.sendMessage(lang.getColoredMessage(userLang, "notfound"));
+					return true;
+				}
+				
+				if (getAccount(EdgeCoreAPI.userAPI().getUser(args[2])) == null) {
+					
+					player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_user_false").replace("[0]", args[2]));
+					
+				} else {
+					
+					player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_user_true").replace("[0]", args[2]));
+					
+				}
+				
+				return true;
+			}
+			
+			if (args[1].equalsIgnoreCase("reload")) {
+				if (args.length == 2) {
+					
+					economy.synchronizeEconomy(true, true);
+					player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_reload_all_success"));
+					
+					return true;
+				}
+				
+				if (args.length == 3) {
+					
+					if (!EdgeCoreAPI.userAPI().exists(args[2])) {
+						player.sendMessage(lang.getColoredMessage(userLang, "notfound"));
+						return true;
+					}
+					
+					BankAccount acc = getAccount(EdgeCoreAPI.userAPI().getUser(args[2]));
+					
+					if (acc == null) {
+						player.sendMessage(lang.getColoredMessage(userLang, "noaccount_user").replace("[0]", args[2]));
+						return true;
+					}
+					
+					economy.synchronizeAccount(acc.getId());
+					
+					return true;
+				}
+			}
+			
+			if (args[1].equalsIgnoreCase("amount")) {
+				if (args.length != 2) {
+					sendUsage(player);
+					return true;
+				}
+				
+				player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_amount").replace("[0]", economy.amountOfAccounts() + ""));
+				
+				return true;
+			}
+						
 			if (args[1].equalsIgnoreCase("info")) {
 				
-				BankAccount acc = EdgeConomy.getEconomy().getAccount(user.getName());
+				BankAccount acc = getAccount(user);
 				
 				if (acc == null) {
 					player.sendMessage(lang.getColoredMessage(userLang, "noaccount"));
 					return true;
 				}
 				
-				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_title").replace("[0]", acc.getID() + ""));
-				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_id").replace("[0]", acc.getID() + ""));
-				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_owner").replace("[0]", acc.getOwner()));
+				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_title").replace("[0]", user.getName()));
+				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_id").replace("[0]", acc.getId() + ""));
+				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_owner").replace("[0]", acc.getUser().getName()));
 				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_balance").replace("[0]", acc.getBalance() + ""));
 				player.sendMessage(lang.getColoredMessage(userLang, "acc_info_credit").replace("[0]", acc.getRawCredit() + "").replace("[1]", acc.getCredit() + ""));
 				
@@ -113,25 +279,18 @@ public class AccountCommand extends AbstractCommand {
 					return true;
 				}
 				
-				if (EdgeConomy.getEconomy().hasAccount(user.getID())) {
+				if (economy.hasAccount(user)) {
 					player.sendMessage(lang.getColoredMessage(userLang, "acc_apply_alreadyacc"));
 					return true;
 				}
 				
-				Cuboid cuboid = Cuboid.getCuboid(player.getEyeLocation());
-				
-				if (cuboid == null) {
+				if (!economy.insideBankCuboid(player)) {
 					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
 					return true;
 				}
 				
-				if (CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
-					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
-					return true;
-				}
-				
-				EdgeConomy.getEconomy().registerAccount(user.getID(), 500D, 0);
-				player.sendMessage(lang.getColoredMessage(userLang, "acc_apply_success").replace("[0]", EdgeConomy.getEconomy().getAccount(player.getName()).getID() + ""));
+				economy.registerAccount(user.getUUID(), 500.0D, 0);
+				player.sendMessage(lang.getColoredMessage(userLang, "acc_apply_success").replace("[0]", getAccount(user).getId() + ""));
 				
 				return true;
 			}
@@ -142,25 +301,18 @@ public class AccountCommand extends AbstractCommand {
 					return true;
 				}
 				
-				if (!EdgeConomy.getEconomy().hasAccount(user.getID())) {
+				if (!economy.hasAccount(user)) {
 					player.sendMessage(lang.getColoredMessage(userLang, "noaccount"));
 					return true;
 				}
 				
-				Cuboid cuboid = Cuboid.getCuboid(player.getEyeLocation());
-				
-				if (cuboid == null) {
+				if (!economy.insideBankCuboid(player)) {
 					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
 					return true;
 				}
 				
-				if (CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
-					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
-					return true;
-				}
-				
-				EdgeConomy.getEconomy().deleteAccount(EdgeConomy.getEconomy().getAccount(player.getName()).getID());
-				player.sendMessage(lang.getColoredMessage(userLang, "acc_deactivate_success").replace("[0]", EdgeConomy.getEconomy().getAccount(player.getName()).getID() + ""));
+				player.sendMessage(lang.getColoredMessage(userLang, "acc_deactivate_success").replace("[0]", getAccount(user).getId() + ""));
+				economy.deleteAccount(getAccount(user).getId());
 				
 				return true;
 			}
@@ -171,39 +323,15 @@ public class AccountCommand extends AbstractCommand {
 					return true;
 				}
 				
-				double amount = Double.parseDouble(args[2]);
-				BankAccount acc = EdgeConomy.getEconomy().getAccount(user.getName());
+				BankAccount acc = getAccount(user);
 				
 				if (acc == null) {
 					player.sendMessage(lang.getColoredMessage(userLang, "noaccount"));
 					return true;
 				}
 				
-				Cuboid cuboid = Cuboid.getCuboid(player.getEyeLocation());
-				EconomyPlayer ep = acc.getEconomyPlayer();
-				
-				if (cuboid == null) {
+				if (!economy.insideATMCuboid(player) || !economy.insideBankCuboid(player)) {
 					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "ATM / Bank"));
-					return true;
-				}
-				
-				if (cuboid.getCuboidType() != CuboidType.ATM.getTypeID() || cuboid.getCuboidType() != CuboidType.Bank.getTypeID()) {
-					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "ATM / Bank"));
-					return true;
-				}
-				
-				if (ep == null) {
-					player.sendMessage(lang.getColoredMessage(userLang, "notfound"));
-					return true;
-				}
-				
-				if (amount <= 0) {
-					player.sendMessage(lang.getColoredMessage(userLang, "amounttoolow"));
-					return true;
-				}
-				
-				if (amount > ep.getCash()) {
-					player.sendMessage(lang.getColoredMessage(userLang, "notenoughmoney"));
 					return true;
 				}
 				
@@ -212,7 +340,25 @@ public class AccountCommand extends AbstractCommand {
 					return true;
 				}
 				
-				ep.updateCash(ep.getCash() - amount);
+				EconomyPlayer ecoPl = acc.getEconomyPlayer();
+				double amount = Double.parseDouble(args[2]);
+				
+				if (ecoPl == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "globalerror"));
+					return true;
+				}
+				
+				if (amount <= 0) {
+					player.sendMessage(lang.getColoredMessage(userLang, "amounttoolow"));
+					return true;
+				}
+				
+				if (amount > ecoPl.getCash()) {
+					player.sendMessage(lang.getColoredMessage(userLang, "amounttoohigh"));
+					return true;
+				}
+				
+				ecoPl.updateCash(ecoPl.getCash() - amount);
 				acc.updateBalance(acc.getBalance() + amount);
 				
 				player.sendMessage(lang.getColoredMessage(userLang, "acc_deposit_success").replace("[0]", amount + ""));
@@ -226,29 +372,28 @@ public class AccountCommand extends AbstractCommand {
 					return true;
 				}
 				
-				double amount = Double.parseDouble(args[2]);
-				BankAccount acc = EdgeConomy.getEconomy().getAccount(user.getName());
+				BankAccount acc = getAccount(user);
 				
 				if (acc == null) {
 					player.sendMessage(lang.getColoredMessage(userLang, "noaccount"));
 					return true;
 				}
 				
-				EconomyPlayer ep = acc.getEconomyPlayer();
-				Cuboid cuboid = Cuboid.getCuboid(player.getEyeLocation());
-				
-				if (cuboid == null) {
+				if (!economy.insideATMCuboid(player) || !economy.insideBankCuboid(player)) {
 					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "ATM / Bank"));
 					return true;
 				}
 				
-				if (cuboid.getCuboidType() != CuboidType.ATM.getTypeID() || cuboid.getCuboidType() != CuboidType.Bank.getTypeID()) {
-					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "ATM / Bank"));
+				if (acc.isClosed()) {
+					player.sendMessage(lang.getColoredMessage(userLang, "account_closed"));
 					return true;
 				}
 				
-				if (ep == null) {
-					player.sendMessage(lang.getColoredMessage(userLang, "notfound"));
+				EconomyPlayer ecoPl = acc.getEconomyPlayer();
+				double amount = Double.parseDouble(args[2]);
+				
+				if (ecoPl == null) {
+					player.sendMessage(lang.getColoredMessage(userLang, "globalerror"));
 					return true;
 				}
 				
@@ -258,228 +403,38 @@ public class AccountCommand extends AbstractCommand {
 				}
 				
 				if (amount > acc.getBalance()) {
-					player.sendMessage(lang.getColoredMessage(userLang, "notenoughmoney"));
+					player.sendMessage(lang.getColoredMessage(userLang, "amounttoohigh"));
 					return true;
 				}
 				
-				if (acc.isClosed()) {
-					player.sendMessage(lang.getColoredMessage(userLang, "account_closed"));
-					return true;
-				}
-				
-				if (amount >= Economy.getMaxATMAmount() && cuboid.getCuboidType() == CuboidType.ATM.getTypeID()) {
+				if (amount >= Economy.getMaxATMAmount() && !economy.insideBankCuboid(player)) {
 					player.sendMessage(lang.getColoredMessage(userLang, "withdraw_needbank").replace("[0]", Economy.getMaxATMAmount() + ""));
 					return true;
 				}
-					
-				double withdrawalFee = (int) (acc.getBalance() / 100 * Economy.getWithdrawalFee());
 				
-				ep.updateCash(ep.getCash() + amount);
-				acc.updateBalance(acc.getBalance() - (amount + withdrawalFee));
+				double fee = acc.getBalance() / 10 * Economy.getWithdrawalFee();
+				
+				ecoPl.updateCash(ecoPl.getCash() + amount);
+				acc.updateBalance(acc.getBalance() - (amount + fee));
 				
 				player.sendMessage(lang.getColoredMessage(userLang, "acc_withdraw_success").replace("[0]", amount + ""));
 				
-				return true;
-			}
-			
-			if (args[1].equalsIgnoreCase("create")) {
-				if (args.length != 5) {
-					sendUsage(player);
-					return false;
-				}
-				
-				User accUser = EdgeCoreAPI.userAPI().getUser(args[2]);
-				
-				if (accUser == null) {
-					player.sendMessage(lang.getColoredMessage(userLang, "notfound"));
-					return true;
-				}
-				
-				double balance = Double.parseDouble(args[3]);
-				double credit = Double.parseDouble(args[4]);
-				
-				if (balance < 0 || credit < 0) {
-					player.sendMessage(lang.getColoredMessage(userLang, "amounttoolow"));
-				}
-				
-				EdgeConomy.getEconomy().registerAccount(accUser.getID(), balance, credit);
-				player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_create_success").replace("[0]", args[2]));
-				
-				return true;
-			}
-			
-			if (args[1].equalsIgnoreCase("delete")) {
-				if (args.length != 3) {
-					sendUsage(player);
-					return false;
-				}
-				
-				int id = Integer.parseInt(args[2]);
-				
-				if (!EdgeConomy.getEconomy().existsAccount(id)) {
-					player.sendMessage(lang.getColoredMessage(userLang, "unknownaccount").replace("[0]", id + ""));
-					return true;
-				}
-				
-				EdgeConomy.getEconomy().deleteAccount(id);
-				player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_delete_success").replace("[0]", id + ""));
-				
-				return true;
-			}
-			
-			if (args[1].equalsIgnoreCase("updatebalance")) {
-				if (args.length != 4) {
-					sendUsage(player);
-					return false;
-				}
-				
-				double balance = Double.parseDouble(args[3]);
-				BankAccount acc = EdgeConomy.getEconomy().getAccountByOwnerID(Integer.parseInt(args[2]));
-				
-				if (acc == null) {
-					player.sendMessage(lang.getColoredMessage(userLang, "unknownaccount").replace("[0]", args[2]));
-					return true;
-				}
-				
-				if (acc.isClosed()) {
-					player.sendMessage(lang.getColoredMessage(userLang, "account_closed_id").replace("[0]", acc.getID() + ""));
-					return true;
-				}
-				
-				acc.updateBalance(balance);
-				player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_updatebalance_success").replace("[0]", acc.getID() + "").replace("[1]", acc.getBalance() + ""));
-				
-				return true;
-			}
-			
-			if (args[1].equalsIgnoreCase("lock")) {
-				if (args.length != 3) {
-					sendUsage(player);
-					return false;
-				}
-				
-				int id = Integer.parseInt(args[2]);
-				
-				if (id <= 0) {
-					player.sendMessage(lang.getColoredMessage(userLang, "amounttoolow"));
-					return true;
-				}
-				
-				BankAccount acc = EdgeConomy.getEconomy().getAccount(id);
-				
-				if (acc == null) {
-					player.sendMessage(lang.getColoredMessage(userLang, "unknownaccount").replace("[0]", id + ""));
-					return true;
-				}
-				
-				if (acc.isClosed()) {
-					player.sendMessage(lang.getColoredMessage(userLang, "account_closed_id").replace("[0]", id + ""));
-					return true;
-				}
-				
-				acc.setClosed(true);
-				player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_status_locked").replace("[0]", id + ""));
-				
-				return true;
-			}
-			
-			if (args[1].equalsIgnoreCase("unlock")) {
-				if (args.length != 3) {
-					sendUsage(player);
-					return false;
-				}
-				
-				int id = Integer.parseInt(args[2]);
-				
-				if (id <= 0) {
-					player.sendMessage(lang.getColoredMessage(userLang, "amounttoolow"));
-					return true;
-				}
-				
-				BankAccount acc = EdgeConomy.getEconomy().getAccount(id);
-				
-				if (acc == null) {
-					player.sendMessage(lang.getColoredMessage(userLang, "unknownaccount").replace("[0]", id + ""));
-					return true;
-				}
-				
-				acc.setClosed(false);
-				player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_status_unlocked").replace("[0]", id + ""));
-				
-				return true;
-			}
-			
-			if (args[1].equalsIgnoreCase("exists")) {
-				if (args.length != 3) {
-					sendUsage(player);
-					return false;
-				}
-				
-				int id = Integer.parseInt(args[2]);
-				
-				if (EdgeConomy.getEconomy().existsAccount(id)) {
-					
-					player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_exists_id_true").replace("[0]", id + ""));
-					
-				} else {
-					
-					player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_exists_id_false").replace("[0]", id + ""));
-					
-				}
-				
-				return true;
-			}
-			
-			if (args[1].equalsIgnoreCase("reload")) {
-				if (args.length > 3) {
-					sendUsage(player);
-					return false;
-				}
-				
-				if (args.length == 2) {
-					
-					EdgeConomy.getEconomy().synchronizeEconomy(true, false);
-					player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_reload_all_success"));
-					
-					return true;
-				}
-				
-				if (args.length == 3) {
-					
-					int id = Integer.parseInt(args[2]);
-					
-					if (!EdgeConomy.getEconomy().existsAccount(id)) {
-						player.sendMessage(lang.getColoredMessage(userLang, "unknownaccount").replace("[0]", id + ""));
-						return true;
-					}
-					
-					EdgeConomy.getEconomy().synchronizeAccount(id);
-					player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_reload_success").replace("[0]", id + ""));
-					
-					return true;
-				}
-			}
-			
-			if (args[1].equalsIgnoreCase("amount")) {
-				if (args.length != 2) {
-					sendUsage(player);
-					return false;
-				}
-				
-				player.sendMessage(lang.getColoredMessage(userLang, "admin_acc_amount").replace("[0]", EdgeConomy.getEconomy().amountOfAccounts() + ""));
-				
-				return true;
+				return true;				
 			}
 			
 		} catch(NumberFormatException e) {
 			player.sendMessage(lang.getColoredMessage(userLang, "numberformatexception"));
 		}
-				
-		return true;
+		
+		return false;
 	}
 	
 	@Override
 	public boolean sysAccess(CommandSender sender, String[] args) {
 		return true;
+	}
+	
+	private final BankAccount getAccount(User user) {
+		return economy.getAccount(user);
 	}
 }

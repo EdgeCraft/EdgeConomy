@@ -76,7 +76,7 @@ public class CashCommand extends AbstractCommand {
 				return true;
 			}
 			
-			player.sendMessage(lang.getColoredMessage(userLang, "cash_info_title").replace("[0]", ep.getID() + ""));
+			player.sendMessage(lang.getColoredMessage(userLang, "cash_info_title"));
 			player.sendMessage(lang.getColoredMessage(userLang, "cash_info_amount").replace("[0]", ep.getCash() + ""));
 			player.sendMessage(lang.getColoredMessage(userLang, "cash_info_given").replace("[0]", ep.getTotalGiven() + ""));
 			player.sendMessage(lang.getColoredMessage(userLang, "cash_info_received").replace("[0]", ep.getTotalReceived() + ""));
@@ -124,7 +124,7 @@ public class CashCommand extends AbstractCommand {
 					return true;
 				}
 				
-				if (player.getLocation().distanceSquared(to.getUser().getPlayer().getLocation()) > Economy.getMaxCashDistance()) { 
+				if (player.getLocation().distanceSquared(to.getUserInstance().getPlayer().getLocation()) > Economy.getCashRadius()) { 
 					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_player").replace("[0]", to.getName()));
 					return true;
 				}

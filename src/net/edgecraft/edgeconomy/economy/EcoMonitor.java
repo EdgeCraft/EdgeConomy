@@ -3,13 +3,10 @@ package net.edgecraft.edgeconomy.economy;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import net.edgecraft.edgeconomy.EdgeConomy;
+import net.edgecraft.edgecore.EdgeCore;
 import net.edgecraft.edgecore.EdgeCoreAPI;
 import net.edgecraft.edgecore.lang.LanguageHandler;
 import net.edgecraft.edgecore.user.User;
-import net.edgecraft.edgecuboid.EdgeCuboidAPI;
-import net.edgecraft.edgecuboid.cuboid.Habitat;
-import net.edgecraft.edgecuboid.shop.ShopHandler;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -20,9 +17,10 @@ import org.bukkit.scoreboard.Scoreboard;
 
 public class EcoMonitor {
 	
-	public static Map<String, Scoreboard> ecoMonitor = new LinkedHashMap<>();	
-	private static final EcoMonitor instance = new EcoMonitor();
+	private final Map<User, Scoreboard> monitors = new LinkedHashMap<>();
 	private final LanguageHandler lang = EdgeCoreAPI.languageAPI();
+	
+	private static final EcoMonitor instance = new EcoMonitor();
 	
 	private EcoMonitor() { /* ... */ }
 	
@@ -30,119 +28,94 @@ public class EcoMonitor {
 		return instance;
 	}
 	
-	public Map<String, Scoreboard> getEcoMonitors() {
-		return EcoMonitor.ecoMonitor;
+	public Map<User, Scoreboard> getMonitors() {
+		return monitors;
 	}
 	
-	public int amountOfEcoMonitors() {
-		return EcoMonitor.ecoMonitor.size();
+	public int amountOfMonitors() {
+		return monitors.size();
 	}
 	
 	/**
-	 * Sets the eco monitor scoreboard for the given player
-	 * @param player
-	 * @return Scoreboard
+	 * Shows the economy monitor
+	 * @param user
 	 */
-	public void setScoreboard(final String player) {
+	@SuppressWarnings("deprecation")
+	public void showMonitor(final User target, final User receiver) {
+		if (target == null)
+			return;
 		
 		try {
 			
-			if (player == null) return;
-			if (ecoMonitor.containsKey(player)) {
-				updateScoreboard(player);
-				return;
-			}
+			final BankAccount acc = Economy.getInstance().getAccount(target);
+			final Player player = receiver.getPlayer();
 			
-			// Create need payday instances
-			final BankAccount acc = Economy.getInstance().getAccount(player);
-			final User user = EdgeCoreAPI.userAPI().getUser(player);
-					
-			// Create player
-			final Player p = Bukkit.getPlayerExact(player);
-			
-			// Do not go further if user doesn't exist
-			if (user == null) {
-				return;
-			}
-			
-			// Do not go further if account doesn't exist
 			if (acc == null) {
-				p.sendMessage(lang.getColoredMessage(user.getLanguage(), "global_payday_noaccount"));
+				player.sendMessage(lang.getColoredMessage(target.getLang(), "global_payday_noaccount"));
 				return;
 			}
 			
-			// Create optional habitat
-			final Habitat habitat = EdgeCuboidAPI.cuboidAPI().getHabitatByOwner(player);
-			
-			// Create method heart, the scoreboard
+			// Create the monitor heart: a scoreboard and an objective
 			Scoreboard monitor = Bukkit.getScoreboardManager().getNewScoreboard();
-			Objective obj = monitor.registerNewObjective("EcoMonitor", "dummy");
+			Objective obj = monitor.registerNewObjective("Eco Monitor", "dummy");
 			
-			// Set position and title of the scoreboard
+			// Set position and title
 			obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-			obj.setDisplayName(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_title")); 
+			obj.setDisplayName(lang.getColoredMessage(target.getLang(), "private_ecomonitor_title"));
 			
-			double welfare = acc.hasWelfare() ? Economy.getDefaultWelfare() : 0;
+			// Check for account welfare
+			double welfare = acc.hasWelfare() ? Economy.getWelfareAmount() : 0.0D;
 			
-			// Set payday score
-			final Score paydayTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_payday_title")));
+			// Set PayDay Score
+			final Score paydayTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(target.getLang(), "private_ecomonitor_payday_title")));
 			final Score payday;
-			if (!acc.isClosed())
-				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_payday_value").replace("[0]", (acc.getPayday() + welfare) + "")));
+			
+			if (acc.isClosed())
+				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(target.getLanguage(), "acc_closed")));
 			else
-				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "acc_closed")));
+				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(target.getLang(), "private_ecomonitor_payday_value").replace("[0]", (acc.getPayday() + welfare) + "")));
 			
 			paydayTitle.setScore(10);
 			payday.setScore(9);
-			acc.updateBalance(acc.getBalance() + (acc.getPayday() + welfare));
 			
-			// Set credit score
-			final Score creditTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_credit_title")));
-			final Score credit = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_credit_value").replace("[0]", acc.getCredit() + "")));
+			// Set Credit Score
+			final Score creditTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(target.getLang(), "private_ecomonitor_credit_title")));
+			final Score credit = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(target.getLang(), "private_ecomonitor_credit_value").replace("[0]", acc.getCreditTax() + "")));
 			creditTitle.setScore(8);
 			credit.setScore(7);
-			p.sendMessage("DEBUG: " + acc.getCredit() + " credit, raw: " + acc.getRawCredit());
-			acc.updateBalance(acc.getBalance() - (acc.getCredit() / 100 * 0.2));
 			
-			// Set vehicle score
-			final Score vehicleTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_vehicle_title")));
-			final Score vehicle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_vehicle_value").replace("[0]", "##")));
+			// Set Vehicle Score
+			final Score vehicleTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(target.getLang(), "private_ecomonitor_vehicle_title")));
+			final Score vehicle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(target.getLang(), "private_ecomonitor_vehicle_value").replace("[0]", acc.getVehicleTax() + "")));
 			vehicleTitle.setScore(6);
 			vehicle.setScore(5);
 			
-			// Set property score
-			final double propertyTaxes = (habitat == null ? 0 : habitat.getTaxes()) + (ShopHandler.getInstance().getShop(p.getName()) == null ? 0 :  ShopHandler.getInstance().getShop(p.getName()).getTaxes());
-			
-			final Score propertyTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_property_title")));
-			final Score property = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_property_value").replace("[0]", propertyTaxes + "")));
+			// Set Property Score
+			final Score propertyTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(target.getLang(), "private_ecomonitor_property_title")));
+			final Score property = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(target.getLang(), "private_ecomonitor_property_value").replace("[0]", acc.getPropertyTax() + "")));
 			propertyTitle.setScore(4);
 			property.setScore(3);
-			acc.updateBalance(acc.getBalance() - propertyTaxes);
 			
-			// Set state score
-			final Score stateTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_state_title")));
-			final Score state = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_state_value").replace("[0]", acc.getStateTaxes() + "")));
+			// Set State Score
+			final Score stateTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(target.getLang(), "private_ecomonitor_state_title")));
+			final Score state = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(target.getLang(), "private_ecomonitor_state_value").replace("[0]", acc.getStateTax() + "")));
 			stateTitle.setScore(2);
 			state.setScore(1);
-			acc.updateBalance(acc.getBalance() - acc.getStateTaxes());
 			
-			// Put/Overwrite the scoreboard into the map
-			getEcoMonitors().put(player, monitor);	
+			// Add / Overwrite the scoreboard in the Map
+			getMonitors().put(target, monitor);
 			
-			// Start payday
-			p.sendMessage(lang.getColoredMessage(user.getLanguage(), "global_payday_start").replace("[0]", Economy.getState()));
-			p.setScoreboard(monitor);
+			// Show scoreboard
+			player.setScoreboard(monitor);
 			
-			Bukkit.getScheduler().scheduleSyncDelayedTask(EdgeConomy.getInstance(), new Runnable() {
+			Bukkit.getScheduler().scheduleSyncDelayedTask(EdgeCore.getInstance(), new Runnable() {
 				
 				public void run() {
-					// Reset scoreboard after 10 sec
-					p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+					// Reset scoreboard after 10 seconds
+					player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
 				}
 				
 			}, 20L * 10);
-			
-			p.sendMessage(lang.getColoredMessage(user.getLanguage(), "global_payday_success").replace("[0]", Economy.getState()).replace("[1]", Economy.getPaydayInterval() + ""));
 			
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -150,105 +123,30 @@ public class EcoMonitor {
 	}
 	
 	/**
-	 * Updates the eco monitor scoreboard for the given player
-	 * @param player
+	 * Manages the account internal economy for the payday (including taxes and payday (+ welfare))
+	 * @param user
 	 */
-	public void updateScoreboard(String player) {
+	public void manageEconomy(final User user) {
+		if (user == null)
+			return;
+		
 		try {
 			
-			if (player == null) return;
-			if (!ecoMonitor.containsKey(player)) {
-				setScoreboard(player);
+			// Manage account
+			final BankAccount acc = Economy.getInstance().getAccount(user);
+			
+			if (acc == null)
 				return;
-			}
 			
-			// Create need payday instances
-			final BankAccount acc = Economy.getInstance().getAccount(player);
-			final User user = EdgeCoreAPI.userAPI().getUser(player);
-					
-			// Create player
-			final Player p = Bukkit.getPlayerExact(player);
+			// Check for welfare
+			double welfare = acc.hasWelfare() ? Economy.getWelfareAmount() : 0.0D;
 			
-			// Do not go further if user doesn't exist
-			if (user == null) {
-				return;
-			}
+			// Calculate everything together
+			double payday = acc.getPayday() + welfare;
+			double taxes = acc.getCreditTax() + acc.getVehicleTax() + acc.getPropertyTax() + acc.getStateTax();
 			
-			// Do not go further if account doesn't exist
-			if (acc == null) {
-				p.sendMessage(lang.getColoredMessage(user.getLanguage(), "global_payday_noaccount"));
-				return;
-			}
-			
-			// Create optional habitat
-			final Habitat habitat = EdgeCuboidAPI.cuboidAPI().getHabitatByOwner(player);
-			
-			// Create method heart, the scoreboard
-			Scoreboard monitor = Bukkit.getScoreboardManager().getNewScoreboard();
-			Objective obj = monitor.registerNewObjective("EcoMonitor", "dummy");
-			
-			// Set position and title of the scoreboard
-			obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-			obj.setDisplayName(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_title"));
-			
-			double welfare = acc.hasWelfare() ? Economy.getDefaultWelfare() : 0;
-			
-			// Set payday score
-			final Score paydayTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_payday_title")));
-			final Score payday;
-			if (!acc.isClosed())
-				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_payday_value").replace("[0]", (acc.getPayday() + welfare) + "")));
-			else
-				payday = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "acc_closed")));
-			
-			paydayTitle.setScore(10);
-			payday.setScore(9);
-			acc.updateBalance(acc.getBalance() + acc.getPayday());
-			
-			// Set credit score
-			final Score creditTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_credit_title")));
-			final Score credit = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_credit_value").replace("[0]", acc.getCredit() + "")));
-			creditTitle.setScore(8);
-			credit.setScore(7);
-			acc.updateBalance(acc.getBalance() - (acc.getCredit() / 100 * 0.2));
-			
-			// Set vehicle score
-			final Score vehicleTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_vehicle_title")));
-			final Score vehicle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_vehicle_value").replace("[0]", "##")));
-			vehicleTitle.setScore(6);
-			vehicle.setScore(5);
-			
-			// Set property score
-			final Score propertyTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_property_title")));
-			final Score property = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_property_value").replace("[0]", habitat == null ? "0" : habitat.getTaxes() + "")));
-			propertyTitle.setScore(4);
-			property.setScore(3);
-			acc.updateBalance(acc.getBalance() - (habitat == null ? 0 : habitat.getTaxes()));
-			
-			// Set state score
-			final Score stateTitle = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_state_title")));
-			final Score state = obj.getScore(Bukkit.getOfflinePlayer(lang.getColoredMessage(user.getLanguage(), "private_ecomonitor_state_value").replace("[0]", acc.getStateTaxes() + "")));
-			stateTitle.setScore(2);
-			state.setScore(1);
-			acc.updateBalance(acc.getBalance() - acc.getStateTaxes());
-			
-			// Put/Overwrite the scoreboard into the map
-			getEcoMonitors().put(player, monitor);	
-			
-			// Start payday
-			p.sendMessage(lang.getColoredMessage(user.getLanguage(), "global_payday_start").replace("[0]", Economy.getState()));
-			p.setScoreboard(monitor);
-			
-			Bukkit.getScheduler().scheduleSyncDelayedTask(EdgeConomy.getInstance(), new Runnable() {
-				
-				public void run() {
-					// Reset scoreboard after 10 sec
-					p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
-				}
-				
-			}, 20L * 10);
-			
-			p.sendMessage(lang.getColoredMessage(user.getLanguage(), "global_payday_success").replace("[0]", Economy.getState()).replace("[1]", Economy.getPaydayInterval() + ""));
+			acc.updateBalance(acc.getBalance() + payday);
+			acc.updateBalance(acc.getBalance() - taxes);
 			
 		} catch(Exception e) {
 			e.printStackTrace();

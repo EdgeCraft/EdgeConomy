@@ -2,11 +2,11 @@ package net.edgecraft.edgeconomy;
 
 import java.util.logging.Logger;
 
+import net.edgecraft.edgeconomy.commands.EconomyCommands;
 import net.edgecraft.edgeconomy.economy.EcoMonitor;
 import net.edgecraft.edgeconomy.economy.Economy;
 import net.edgecraft.edgeconomy.other.ConfigHandler;
 import net.edgecraft.edgeconomy.other.EcoMonitorTask;
-import net.edgecraft.edgeconomy.other.EconomyCommands;
 import net.edgecraft.edgeconomy.other.EconomySynchronizationTask;
 import net.edgecraft.edgeconomy.other.HandleEconomyLogin;
 import net.edgecraft.edgeconomy.transactions.TransactionManager;

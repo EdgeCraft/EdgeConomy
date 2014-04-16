@@ -52,7 +52,7 @@ public class Transaction implements Serializable {
 	public String getGist() {
 		return EdgeCoreAPI.languageAPI().getColoredMessage(LanguageHandler.getDefaultLanguage(), "transaction_gist")
 										.replace("[0]", getDateAsString()).replace("[1]", getID() + "")
-										.replace("[2]", getTransactor().getID() + "").replace("[3]", getReceiver().getID() + "")
+										.replace("[2]", getTransactor().getId() + "").replace("[3]", getReceiver().getId() + "")
 										.replace("[4]", getDescription()).replace("[5]", getAmount() + "");
 	}
 

@@ -7,8 +7,6 @@ import net.edgecraft.edgecore.EdgeCore;
 import net.edgecraft.edgecore.command.AbstractCommand;
 import net.edgecraft.edgecore.command.Level;
 import net.edgecraft.edgecore.user.User;
-import net.edgecraft.edgecuboid.cuboid.Cuboid;
-import net.edgecraft.edgecuboid.cuboid.types.CuboidType;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -42,14 +40,13 @@ public class WelfareCommand extends AbstractCommand {
 		if (args[1].equalsIgnoreCase("apply")) {
 			
 			EconomyPlayer ep = Economy.getInstance().getEconomyPlayer(player.getName());
-			Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
 			
 			if (ep == null) {
 				player.sendMessage(lang.getColoredMessage(userLang, "globalerror"));
 				return true;
 			}
 			
-			if (cuboid == null || cuboid.getCuboidType() != CuboidType.Bank.getTypeID()) {
+			if (!Economy.getInstance().insideBankCuboid(player)) {
 				player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
 				return true;
 			}
@@ -73,14 +70,13 @@ public class WelfareCommand extends AbstractCommand {
 		if (args[1].equalsIgnoreCase("cancel")) {
 			
 			EconomyPlayer ep = Economy.getInstance().getEconomyPlayer(player.getName());
-			Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
 			
 			if (ep == null) {
 				player.sendMessage(lang.getColoredMessage(userLang, "globalerror"));
 				return true;
 			}
 			
-			if (cuboid == null || cuboid.getCuboidType() != CuboidType.Bank.getTypeID()) {
+			if (!Economy.getInstance().insideBankCuboid(player)) {
 				player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
 				return true;
 			}
@@ -118,7 +114,7 @@ public class WelfareCommand extends AbstractCommand {
 			
 			EdgeConomy.getEconomy();
 			player.sendMessage(lang.getColoredMessage(userLang, "welfare_info_independentafter")
-					.replace("[0]", Economy.getMaxWelfareBalance() - (ep.getCash() + ep.getAccount().getBalance()) + ""));
+					.replace("[0]", Economy.getMaxWelfareAmount() - (ep.getCash() + ep.getAccount().getBalance()) + ""));
 			
 			return true;
 		}

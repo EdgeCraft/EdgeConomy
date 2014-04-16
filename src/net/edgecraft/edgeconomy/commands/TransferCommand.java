@@ -9,8 +9,6 @@ import net.edgecraft.edgecore.EdgeCoreAPI;
 import net.edgecraft.edgecore.command.AbstractCommand;
 import net.edgecraft.edgecore.command.Level;
 import net.edgecraft.edgecore.user.User;
-import net.edgecraft.edgecuboid.cuboid.Cuboid;
-import net.edgecraft.edgecuboid.cuboid.types.CuboidType;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -69,7 +67,7 @@ public class TransferCommand extends AbstractCommand {
 				}
 				
 				doTransaction(EdgeConomy.getEconomy()
-						.getAccount(user.getName()), EdgeConomy.getEconomy().getAccount(args[1]), Double.parseDouble(args[2]), args[3], player, user);	
+						.getAccount(user.getName()), EdgeConomy.getEconomy().getAccount(args[1]), Double.parseDouble(args[2]), args[3], player, user, false);	
 				
 				return true;
 				
@@ -84,7 +82,7 @@ public class TransferCommand extends AbstractCommand {
 				}
 				
 				doTransaction(EdgeConomy.getEconomy()
-						.getAccount(Integer.parseInt(args[1])), EdgeConomy.getEconomy().getAccount(Integer.parseInt(args[2])), Double.parseDouble(args[3]), args[4], player, user);
+						.getAccount(args[1]), EdgeConomy.getEconomy().getAccount(args[2]), Double.parseDouble(args[3]), args[4], player, user, true);
 				
 				return true;
 			}
@@ -143,14 +141,14 @@ public class TransferCommand extends AbstractCommand {
 		}
 	}
 	
-	private void doTransaction(BankAccount from, BankAccount to, double amount, String description, Player sender, User user) {
+	private void doTransaction(BankAccount from, BankAccount to, double amount, String description, Player sender, User user, boolean admin) {
 		if (from == null) {
 			sender.sendMessage(lang.getColoredMessage(user.getLang(), "noaccount"));
 			return;
 		}
 		
 		if (to == null) {
-			sender.sendMessage(lang.getColoredMessage(user.getLang(), "notfound"));
+			sender.sendMessage(lang.getColoredMessage(user.getLang(), "noaccount_anonym"));
 			return;
 		}
 		
@@ -164,27 +162,32 @@ public class TransferCommand extends AbstractCommand {
 			return;
 		}
 		
-		Cuboid cuboid = Cuboid.getCuboid(sender.getLocation());
-		
-		if (cuboid == null) {
-			sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "notinrange_location").replace("[0]", "ATM"));
+		if (!Economy.getInstance().insideBankCuboid(sender)) {
+			sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "notinrange_location").replace("[0]", "Bank"));
 			return;
 		}
 		
-		if (CuboidType.getType(cuboid.getCuboidType()) == CuboidType.ATM) {
+		if (Economy.getInstance().insideATMCuboid(sender)) {
 			
 			if (amount >= Economy.getMonitoredAmount()) {
 				for (User u : EdgeCoreAPI.userAPI().getUsers().values()) {
 					if (u == null || !u.getPlayer().isOnline()) continue;
 					
 					if (Level.canUse(u, Level.SUPPORTER)) {
-						u.getPlayer().sendMessage(lang.getColoredMessage(user.getLanguage(), "transaction_highamount").replace("[0]", from.getOwner()).replace("[1]", to.getOwner()).replace("[2]", amount + ""));
+						u.getPlayer().sendMessage(lang.getColoredMessage(user.getLanguage(), "transaction_highamount")
+								.replace("[0]", from.getUser().getName())
+								.replace("[1]", to.getUser().getName())
+								.replace("[2]", amount + ""));
 					}
 				}
 			}
 			
 			EdgeConomy.getTransactions().addTransaction(from, to, amount, description);
-			sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "transfer_success").replace("[0]", amount + "").replace("[1]", to.getID() + ""));
+			
+			if (!admin)
+				sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "transfer_success").replace("[0]", amount + "").replace("[1]", to.getUser().getName()));
+			else
+				sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "admin_transfer_success").replace("[0]", from.getId() + "").replace("[1]", to.getId() + "").replace("[2]", amount + ""));
 			
 		} else {
 			sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "eco_nocuboid"));

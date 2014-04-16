@@ -4,29 +4,37 @@ import java.sql.PreparedStatement;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+
+import org.bukkit.entity.Player;
 
 import net.edgecraft.edgecore.EdgeCoreAPI;
 import net.edgecraft.edgecore.db.DatabaseHandler;
+import net.edgecraft.edgecore.user.User;
+import net.edgecraft.edgecuboid.cuboid.Cuboid;
+import net.edgecraft.edgecuboid.cuboid.types.CuboidType;
 
 public class Economy {
 	
-	public final static String accountTable = "edgeconomy_accounts";
-	public final static String ecoPlayerTable = "edgeconomy_eplayer";
+	public static final String accountTable = "edgeconomy_accounts";
+	public static final String ecoPlayerTable = "edgeconomy_eplayer";
 	
-	public static Map<Integer, BankAccount> accounts = new LinkedHashMap<>();
-	public static Map<Integer, EconomyPlayer> ePlayer = new LinkedHashMap<>();
+	// public static final Map<UUID, List<BankAccount>> accounts = new LinkedHashMap<>(); - // Multiple Accounts?
+	public static final Map<Integer, BankAccount> accounts = new LinkedHashMap<>();
+	public static final Map<UUID, EconomyPlayer> ePlayers = new LinkedHashMap<>();
 	
 	private static String state;
 	private static String currency;
 	
 	private static int paydayInterval;
-	private static int maxCashDistance;
+	private static int cashRadius;
+	
 	private static double maxATMAmount;
 	private static double monitoredAmount;
+	private static double defaultCashAmount;
+	private static double welfareAmount;
+	private static double maxWelfareAmount;
 	
-	private static double defaultCash;
-	private static double defaultWelfare;
-	private static double maxWelfareBalance;
 	private static double transferFee;
 	private static double withdrawalFee;
 	private static double creditFee;
@@ -36,226 +44,259 @@ public class Economy {
 	private static boolean allowAccounts;
 	private static boolean autoCreateAccounts;
 	
-	private static final Economy instance = new Economy();
 	private final DatabaseHandler db = EdgeCoreAPI.databaseAPI();
+	private static final Economy instance = new Economy();
 	
 	protected Economy() { /* ... */ }
 	
-	public static Economy getInstance() {
+	public static final Economy getInstance() {
 		return instance;
 	}
 	
+	public final void checkDatabase() {
+		try {
+			
+			db.prepareStatement("CREATE TABLE IF NOT EXISTS '" + Economy.accountTable + "' (id INTEGER AUTO_INCREMENT, "
+							+ "uuid VARCHAR(36) NOT NULL, "
+							+ "balance DOUBLE NOT NULL, "
+							+ "lowestbalance DOUBLE NOT NULL, "
+							+ "highestbalance DOUBLE NOT NULL, "
+							+ "credit DOUBLE NOT NULL, "
+							+ "paidcredit DOUBLE NOT NULL, "
+							+ "closed BOOLEAN NOT NULL DEFAULT 0, "
+							+ "reason TEXT NOT NULL, PRIMARY KEY (id));").executeUpdate();
+			
+			db.prepareStatement("CREATE TABLE IF NOT EXISTS '" + Economy.ecoPlayerTable + "' (uuid VARCHAR(36) NOT NULL, "
+							+ "cash DOUBLE NOT NULL, "
+							+ "totalgiven DOUBLE NOT NULL, "
+							+ "totalreceived DOUBLE NOT NULL, "
+							+ "totaldonated DOUBLE NOT NULL, "
+							+ "welfare BOOLEAN NOT NULL DEFAULT 0);");			
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public Map<Integer, BankAccount> getAccounts() {
-		return Economy.accounts;
+		return accounts;
 	}
 	
 	public int amountOfAccounts() {
-		return Economy.accounts.size();
+		return accounts.size();
 	}
 	
-	public Map<Integer, EconomyPlayer> getEconomyPlayer() {
-		return Economy.ePlayer;
+	public Map<UUID, EconomyPlayer> getEconomyPlayers() {
+		return ePlayers;
 	}
 	
-	public int amountOfEconomyPlayer() {
-		return Economy.ePlayer.size();
+	public int amountOfEconomyPlayers() {
+		return ePlayers.size();
 	}
 	
-	public void registerAccount(int ownerID, double  balance, double credit) {
+	public void registerAccount(UUID uuid, double balance, double credit) {
 		try {
 			
-			if (hasAccount(ownerID)) return;
+			if (hasAccount(uuid))
+				return;
 			
-			int id = generateAccountID();
+			PreparedStatement registerAcc = db.prepareStatement("INSERT INTO " + Economy.accountTable + " (uuid, balance, lowestbalance, highestbaalance, credit, paidcredit, closed, reason) "
+					+ "VALUES (?, ?, '0', '0', ?, '0', DEFAULT, '');");
 			
-			PreparedStatement registerAccount = db.prepareStatement("INSERT INTO " + Economy.accountTable + " (id, ownerID, balance, lowestbalance, highestbalance, credit, paidcredit, closed, reason) "
-					+ "VALUES (?, ?, ?, '0', '0', ?, '0', DEFAULT, DEFAULT);");
+			registerAcc.setString(1, uuid.toString());
+			registerAcc.setDouble(2, balance);
+			registerAcc.setDouble(3, credit);
+			registerAcc.executeUpdate();
 			
-			registerAccount.setInt(1, id);
-			registerAccount.setInt(2, ownerID);
-			registerAccount.setDouble(3, balance);
-			registerAccount.setDouble(4, credit);
-			registerAccount.executeUpdate();
-			
-			synchronizeEconomyPlayer(ownerID);
-			synchronizeAccount(id);
+			synchronizeAccount(getGreatestId(Economy.accountTable));
 			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void registerSessionAccount(BankAccount tempAcc) {
-		if (tempAcc != null)
-			Economy.accounts.put(tempAcc.getID(), tempAcc);
-	}
-	
-	public void registerEconomyPlayer(String name) {
+	public void registerEconomyPlayer(UUID uuid) {
 		try {
 			
-			if (existsEconomyPlayer(name)) return;
+			if (existsEconomyPlayer(uuid))
+				return;
 			
-			int id = generateEconomyPlayerID();
+			PreparedStatement registerEcoPlayer = db.prepareStatement("INSERT INTO " + Economy.ecoPlayerTable + " (uuid, cash, totalgiven, totalreceived, totaldonated, welfare) "
+					+ "VALUES (?, ?, '0', '0', '0', DEFAULT);");
 			
-			PreparedStatement registerEP = db.prepareStatement("INSERT INTO " + Economy.ecoPlayerTable + " (id, cash, totalgiven, totalreceived, totaldonated, welfare) VALUES (?, ?, '0', '0', '0', DEFAULT);");
-			registerEP.setInt(1, id);
-			registerEP.setDouble(2, getDefaultCash());
-			registerEP.executeUpdate();
+			registerEcoPlayer.setString(1, uuid.toString());
+			registerEcoPlayer.setDouble(2, getDefaultCashAmount());
+			registerEcoPlayer.executeUpdate();
 			
-			synchronizeEconomyPlayer(id);
+			synchronizeEconomyPlayer(uuid);
 			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void registerSessionEconomyPlayer(EconomyPlayer tempEcoPlayer) {
-		if (tempEcoPlayer != null)
-			Economy.ePlayer.put(tempEcoPlayer.getID(), tempEcoPlayer);
-	}
-	
-	public void deleteAccount(int id) {
-		if (id <= 0) return;
+	public void deleteAccount(int account) {
+		if (account <= 0)
+			return;
 		
 		try {
 			
-			PreparedStatement deleteAccount = db.prepareStatement("DELETE FROM " + Economy.accountTable + " WHERE id = '" + id + "';");
-			deleteAccount.executeUpdate();
-			
-			Economy.accounts.remove(id);
+			db.prepareStatement("DELETE FROM " + Economy.accountTable + " WHERE id = '" + account + "';").executeUpdate();
+			getAccounts().remove(account);
 			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void deleteEconomyPlayer(int id) {
-		if (id <= 0) return;
+	public void deleteEconomyPlayer(UUID uuid) {
+		if (uuid == null)
+			return;
 		
 		try {
 			
-			PreparedStatement deleteEP = db.prepareStatement("DELETE FROM " + Economy.ecoPlayerTable + " WHERE id = '" + id + "';");
-			deleteEP.executeUpdate();
+			db.prepareStatement("DELETE FROM " + Economy.ecoPlayerTable + " WHERE uuid = '" + uuid.toString() + "';").executeUpdate();
+			getEconomyPlayers().remove(uuid);
 			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public int generateAccountID() throws Exception {
-		if (amountOfAccounts() <= 0) return 1;
+	public void deleteEconomyPlayer(String uuid) {
+		if (uuid == null)
+			return;
 		
-		return greatestID(Economy.accountTable) + 1;
+		deleteEconomyPlayer(UUID.fromString(uuid));
 	}
 	
-	public int generateEconomyPlayerID() throws Exception {
-		if (amountOfEconomyPlayer() <= 0) return 1;
+	public final boolean insideBankCuboid(Player player) {
+		Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
 		
-		return greatestID(Economy.ecoPlayerTable) + 1;
+		if (cuboid == null)
+			return false;
+		
+		if (cuboid.getCuboidType() == CuboidType.Bank.getTypeID())
+			return true;
+		else
+			return false;
 	}
 	
-	public int greatestID(String table) throws Exception {
-		List<Map<String, Object>> tempVar = db.getResults("SELECT COUNT(id) AS amount FROM " + table);
-		int tempID = Integer.parseInt(String.valueOf(tempVar.get(0).get("amount")));
+	public final boolean insideATMCuboid(Player player) {
+		Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
 		
-		if (tempID <= 0) return 1;
-
-		return tempID;
+		if (cuboid == null)
+			return false;
+		
+		if (cuboid.getCuboidType() == CuboidType.ATM.getTypeID())
+			return true;
+		else
+			return false;
+	}
+	
+	public boolean hasAccount(User user) {
+		for (BankAccount acc : getAccounts().values()) {
+			if (acc.getUser().equals(user))
+				return true;
+		}
+		
+		return false;
+	}
+	
+	public boolean hasAccount(UUID owner) {
+		return hasAccount(EdgeCoreAPI.userAPI().getUser(owner));
 	}
 	
 	public boolean existsAccount(int id) {
-		return Economy.accounts.containsKey(id);
+		return getAccounts().containsKey(id);
 	}
 	
 	public boolean existsAccount(BankAccount acc) {
-		if (acc != null)
-			return existsAccount(acc.getID());
-		
-		return false;
-	}
-	
-	public boolean hasAccount(int ownerID) {
-		for (BankAccount acc : Economy.accounts.values()) {
-			if (acc.getOwnerID() == ownerID) {
-				return true;
-			}
-		}
-		
-		return false;
-	}
-	
-	public boolean existsEconomyPlayer(int id) {
-		return Economy.ePlayer.containsKey(id);
-	}
-	
-	public boolean existsEconomyPlayer(EconomyPlayer eco) {
-		if (eco != null)
-			return existsEconomyPlayer(eco.getID());
-		
-		return false;
-	}
-	
-	public boolean existsEconomyPlayer(String name) {
-		for (EconomyPlayer eco : Economy.ePlayer.values()) {
-			if (eco.getName().equals(name)) {
-				return true;
-			}
-		}
-		
-		return false;
+		return getAccounts().containsValue(acc);
 	}
 	
 	public BankAccount getAccount(int id) {
-		return Economy.accounts.get(id);
+		return existsAccount(id) ? getAccounts().get(id) : null;
 	}
 	
-	public BankAccount getAccount(String owner) {
-		for (BankAccount acc : Economy.accounts.values()) {
-			if (acc.getOwner().equals(owner)) {
+	public BankAccount getAccount(User user) {
+		for (BankAccount acc : getAccounts().values()) {
+			if (acc.getUser().equals(user))
 				return acc;
-			}
 		}
 		
 		return null;
 	}
 	
-	public BankAccount getAccountByOwnerID(int ownerID) {
-		for (BankAccount acc : Economy.accounts.values()) {
-			if (acc.getOwnerID() == ownerID) {
+	public BankAccount getAccount(String user) {
+		for (BankAccount acc : getAccounts().values()) {
+			if (acc.getUser().getName().equals(user))
 				return acc;
-			}
 		}
 		
 		return null;
 	}
 	
-	public EconomyPlayer getEconomyPlayer(int id) {
-		return Economy.ePlayer.get(id);
+	public BankAccount getAccount(UUID owner) {
+		for (BankAccount acc : getAccounts().values()) {
+			if (acc.getOwner().equals(owner))
+				return acc;
+		}
+		
+		return null;
+	}
+	
+	public boolean existsEconomyPlayer(UUID uuid) {
+		return getEconomyPlayers().containsKey(uuid);
+	}
+	
+	public boolean existsEconomyPlayer(String name) {
+		for (EconomyPlayer eco : getEconomyPlayers().values()) {
+			if (EdgeCoreAPI.userAPI().getUser(eco.getUser()).getName().equals(name))
+				return true;
+		}
+		
+		return false;
+	}
+	
+	public EconomyPlayer getEconomyPlayer(UUID uuid) {
+		return getEconomyPlayers().get(uuid);
 	}
 	
 	public EconomyPlayer getEconomyPlayer(String name) {
-		for (EconomyPlayer eco : Economy.ePlayer.values()) {
-			if (eco.getName().equals(name)) {
+		for (EconomyPlayer eco : getEconomyPlayers().values()) {
+			if (EdgeCoreAPI.userAPI().getUser(eco.getUser()).getName().equals(name))
 				return eco;
-			}
 		}
 		
 		return null;
 	}
 	
-	public void synchronizeEconomy(boolean accounts, boolean ePlayer) {
+	public EconomyPlayer getEconomyPlayer(BankAccount acc) {
+		return acc.getEconomyPlayer();
+	}
+	
+	public int getGreatestId(String table) throws Exception {
+		List<Map<String, Object>> tempVar = db.getResults("SELECT MAX(id) AS amount FROM " + table + ";");
+		int tempID = Integer.parseInt(String.valueOf(tempVar.get(0).get("id")));
+		
+		if (tempID <= 0) return 1;
+		
+		return tempID;
+	}
+	
+	public void synchronizeEconomy(boolean accounts, boolean ecoplayers) {
 		try {
 			
 			if (accounts) {
-				for (int i = 1; i <= greatestID(Economy.accountTable); i++) {
+				for (int i = 1; i <= getGreatestId(Economy.accountTable); i++)
 					synchronizeAccount(i);
-				}
 			}
 			
-			if (ePlayer) {
-				for (int i = 1; i <= greatestID(Economy.ecoPlayerTable); i++) {
-					synchronizeEconomyPlayer(i);
-				}
+			if (ecoplayers) {
+				for (int i = 1; i <= getGreatestId(Economy.ecoPlayerTable); i++)
+					for (User user : EdgeCoreAPI.userAPI().getUsers().values())
+						synchronizeEconomyPlayer(user.getUUID());
 			}
 			
 		} catch(Exception e) {
@@ -263,7 +304,7 @@ public class Economy {
 		}
 	}
 	
-	public synchronized void synchronizeAccount(int id) {
+	public void synchronizeAccount(int id) {
 		try {
 			
 			List<Map<String, Object>> results = db.getResults("SELECT * FROM " + Economy.accountTable + " WHERE id = '" + id + "';");
@@ -275,10 +316,10 @@ public class Economy {
 				for (Map.Entry<String, Object> entry : results.get(i).entrySet()) {
 					
 					if (entry.getKey().equals("id")) {
-						acc.setID(Integer.valueOf(entry.getValue().toString()));
+						acc.setId(Integer.valueOf(entry.getValue().toString()));
 						
-					} else if(entry.getKey().equals("ownerID")) {
-						acc.setOwnerID(Integer.valueOf(entry.getValue().toString()));
+					} else if(entry.getKey().equals("uuid")) {
+						acc.setOwner(UUID.fromString(entry.getValue().toString()));
 						
 					} else if(entry.getKey().equals("balance")) {
 						acc.setBalance(Double.valueOf(entry.getValue().toString()));
@@ -306,7 +347,8 @@ public class Economy {
 				}
 				
 				acc.updatePayday();
-				Economy.accounts.put(acc.getID(), acc);
+				Economy.accounts.put(acc.getId(), acc);
+				
 			}
 			
 		} catch(Exception e) {
@@ -314,10 +356,10 @@ public class Economy {
 		}
 	}
 	
-	public synchronized void synchronizeEconomyPlayer(int id) {
+	public void synchronizeEconomyPlayer(UUID uuid) {
 		try {
 			
-			List<Map<String, Object>> results = db.getResults("SELECT * FROM " + Economy.ecoPlayerTable + " WHERE id = '" + id + "';");
+			List<Map<String, Object>> results = db.getResults("SELECT * FROM " + Economy.ecoPlayerTable + " WHERE uuid = '" + uuid.toString() + "';");
 			
 			for (int i = 0; i < results.size(); i++) {
 				
@@ -325,8 +367,8 @@ public class Economy {
 				
 				for (Map.Entry<String, Object> entry : results.get(i).entrySet()) {
 					
-					if (entry.getKey().equals("id")) {
-						eco.setID(Integer.valueOf(entry.getValue().toString()));
+					if (entry.getKey().equals("uuid")) {
+						eco.setUser(UUID.fromString(entry.getValue().toString()));
 						
 					} else if(entry.getKey().equals("cash")) {
 						eco.setCash(Double.valueOf(entry.getValue().toString()));
@@ -347,7 +389,7 @@ public class Economy {
 					}
 				}
 				
-				Economy.ePlayer.put(eco.getID(), eco);
+				Economy.ePlayers.put(eco.getUser(), eco);
 			}
 			
 		} catch(Exception e) {
@@ -359,118 +401,42 @@ public class Economy {
 		return state;
 	}
 
-	public static String getCurrency() {
-		return currency;
-	}
-	
-	public static int getPaydayInterval() {
-		return paydayInterval;
-	}
-	
-	public static int getMaxCashDistance() {
-		return maxCashDistance;
-	}
-
-	public static double getMaxATMAmount() {
-		return maxATMAmount;
-	}
-
-	public static double getDefaultCash() {
-		return defaultCash;
-	}
-
-	public static double getDefaultWelfare() {
-		return defaultWelfare;
-	}
-
-	public static double getMaxWelfareBalance() {
-		return maxWelfareBalance;
-	}
-
-	public static double getTransferFee() {
-		return transferFee;
-	}
-
-	public static double getWithdrawalFee() {
-		return withdrawalFee;
-	}
-
-	public static double getCreditFee() {
-		return creditFee;
-	}
-
-	public static double getPaydayBonus() {
-		return paydayBonus;
-	}
-
-	public static boolean isAllowAccounts() {
-		return allowAccounts;
-	}
-
-	public static boolean isAutoCreateAccounts() {
-		return autoCreateAccounts;
-	}
-
-	public static void setePlayer(Map<Integer, EconomyPlayer> ePlayer) {
-		Economy.ePlayer = ePlayer;
-	}
-
 	public static void setState(String state) {
 		Economy.state = state;
+	}
+
+	public static String getCurrency() {
+		return currency;
 	}
 
 	public static void setCurrency(String currency) {
 		Economy.currency = currency;
 	}
 
-	public static void setPaydayInterval(int interval) {
-		Economy.paydayInterval = interval;
+	public static int getPaydayInterval() {
+		return paydayInterval;
 	}
-	
-	public static void setMaxCashDistance(int maxCashDistance) {
-		Economy.maxCashDistance = maxCashDistance;
+
+	public static void setPaydayInterval(int paydayInterval) {
+		Economy.paydayInterval = paydayInterval;
+	}
+
+	public static int getCashRadius() {
+		return cashRadius;
+	}
+
+	public static void setCashRadius(int cashRadius) {
+		Economy.cashRadius = cashRadius;
+	}
+
+	public static double getMaxATMAmount() {
+		return maxATMAmount;
 	}
 
 	public static void setMaxATMAmount(double maxATMAmount) {
 		Economy.maxATMAmount = maxATMAmount;
 	}
 
-	public static void setDefaultCash(double defaultCash) {
-		Economy.defaultCash = defaultCash;
-	}
-
-	public static void setDefaultWelfare(double defaultWelfare) {
-		Economy.defaultWelfare = defaultWelfare;
-	}
-
-	public static void setMaxWelfareBalance(double maxWelfareBalance) {
-		Economy.maxWelfareBalance = maxWelfareBalance;
-	}
-
-	public static void setTransferFee(double transferFee) {
-		Economy.transferFee = transferFee;
-	}
-
-	public static void setWithdrawalFee(double withdrawalFee) {
-		Economy.withdrawalFee = withdrawalFee;
-	}
-
-	public static void setCreditFee(double creditFee) {
-		Economy.creditFee = creditFee;
-	}
-
-	public static void setPaydayBonus(double paydayBonus) {
-		Economy.paydayBonus = paydayBonus;
-	}
-
-	public static void setAllowAccounts(boolean allowAccounts) {
-		Economy.allowAccounts = allowAccounts;
-	}
-
-	public static void setAutoCreateAccounts(boolean autoCreateAccounts) {
-		Economy.autoCreateAccounts = autoCreateAccounts;
-	}
-	
 	public static double getMonitoredAmount() {
 		return monitoredAmount;
 	}
@@ -478,12 +444,85 @@ public class Economy {
 	public static void setMonitoredAmount(double monitoredAmount) {
 		Economy.monitoredAmount = monitoredAmount;
 	}
-	
+
+	public static double getDefaultCashAmount() {
+		return defaultCashAmount;
+	}
+
+	public static void setDefaultCashAmount(double defaultCashAmount) {
+		Economy.defaultCashAmount = defaultCashAmount;
+	}
+
+	public static double getWelfareAmount() {
+		return welfareAmount;
+	}
+
+	public static void setWelfareAmount(double welfareAmount) {
+		Economy.welfareAmount = welfareAmount;
+	}
+
+	public static double getMaxWelfareAmount() {
+		return maxWelfareAmount;
+	}
+
+	public static void setMaxWelfareAmount(double maxWelfareAmount) {
+		Economy.maxWelfareAmount = maxWelfareAmount;
+	}
+
+	public static double getTransferFee() {
+		return transferFee;
+	}
+
+	public static void setTransferFee(double transferFee) {
+		Economy.transferFee = transferFee;
+	}
+
+	public static double getWithdrawalFee() {
+		return withdrawalFee;
+	}
+
+	public static void setWithdrawalFee(double withdrawalFee) {
+		Economy.withdrawalFee = withdrawalFee;
+	}
+
+	public static double getCreditFee() {
+		return creditFee;
+	}
+
+	public static void setCreditFee(double creditFee) {
+		Economy.creditFee = creditFee;
+	}
+
+	public static double getPaydayBonus() {
+		return paydayBonus;
+	}
+
+	public static void setPaydayBonus(double paydayBonus) {
+		Economy.paydayBonus = paydayBonus;
+	}
+
 	public static double getStateTax() {
 		return stateTax;
 	}
-	
-	public static void setStateTax(double tax) {
-		Economy.stateTax = tax;
+
+	public static void setStateTax(double stateTax) {
+		Economy.stateTax = stateTax;
 	}
+
+	public static boolean isAllowAccounts() {
+		return allowAccounts;
+	}
+
+	public static void setAllowAccounts(boolean allowAccounts) {
+		Economy.allowAccounts = allowAccounts;
+	}
+
+	public static boolean isAutoCreateAccounts() {
+		return autoCreateAccounts;
+	}
+
+	public static void setAutoCreateAccounts(boolean autoCreateAccounts) {
+		Economy.autoCreateAccounts = autoCreateAccounts;
+	}
+	
 }

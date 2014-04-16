@@ -14,13 +14,17 @@ public class EcoMonitorTask extends BukkitRunnable {
 	@Override
 	public void run() {		
 		
+		if (Bukkit.getOnlinePlayers().length <= 0)
+			return;
+		
 		EdgeConomy.log.info(EdgeConomy.ecobanner + "Starte PayDay..");
 		
 		for (Player p : Bukkit.getOnlinePlayers()) {
 			if (p == null) continue;
 			if (!EdgeCoreAPI.userAPI().exists(p.getName())) continue;
 			
-			EdgeConomy.getEcoMonitor().updateScoreboard(p.getName());
+			EdgeConomy.getEcoMonitor().manageEconomy(EdgeCoreAPI.userAPI().getUser(p.getUniqueId()));
+			EdgeConomy.getEcoMonitor().showMonitor(EdgeCoreAPI.userAPI().getUser(p.getUniqueId()), EdgeCoreAPI.userAPI().getUser(p.getUniqueId()));
 		}
 		
 		EdgeConomy.log.info(EdgeConomy.ecobanner + "PayDay erfolgreich abgeschlossen!");

@@ -1,11 +1,11 @@
-﻿name: EdgeConomy
-version: beta_2.2
+name: EdgeConomy
+version: beta_3.0
 author: Panjab
 authors: [lush]
 website: http://edgecraft.de
 
 depend: [EdgeCore]
-loadbefore: [EdgeCuboid]
+loadbefore: [EdgeCuboid, EdgeJobs]
 
 main: net.edgecraft.edgeconomy.EdgeConomy
 

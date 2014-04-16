@@ -2,14 +2,13 @@ package net.edgecraft.edgeconomy.commands;
 
 import net.edgecraft.edgeconomy.EdgeConomy;
 import net.edgecraft.edgeconomy.economy.BankAccount;
+import net.edgecraft.edgeconomy.economy.Economy;
 import net.edgecraft.edgecore.EdgeCore;
 import net.edgecraft.edgecore.EdgeCoreAPI;
 import net.edgecraft.edgecore.command.AbstractCommand;
 import net.edgecraft.edgecore.command.Level;
 import net.edgecraft.edgecore.lang.LanguageHandler;
 import net.edgecraft.edgecore.user.User;
-import net.edgecraft.edgecuboid.cuboid.Cuboid;
-import net.edgecraft.edgecuboid.cuboid.types.CuboidType;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -54,10 +53,10 @@ public class CreditCommand extends AbstractCommand {
 		
 		if (u == null || !Level.canUse(u, Level.MODERATOR)) return;
 		
-		sender.sendMessage(EdgeCore.usageColor + "/credit set <account> <amount>");
-		sender.sendMessage(EdgeCore.usageColor + "/credit remove <account>");
-		sender.sendMessage(EdgeCore.usageColor + "/credit pay <account> <amount>");
-		sender.sendMessage(EdgeCore.usageColor + "/credit info <account>");
+		sender.sendMessage(EdgeCore.usageColor + "/credit set <user> <amount>");
+		sender.sendMessage(EdgeCore.usageColor + "/credit remove <user>");
+		sender.sendMessage(EdgeCore.usageColor + "/credit pay <user> <amount>");
+		sender.sendMessage(EdgeCore.usageColor + "/credit info <user>");
 	}
 	
 	@Override
@@ -73,21 +72,14 @@ public class CreditCommand extends AbstractCommand {
 					return true;
 				}
 				
-				BankAccount acc = EdgeConomy.getEconomy().getAccount(user.getName());
+				BankAccount acc = EdgeConomy.getEconomy().getAccount(user);
 				
 				if (acc == null) {
 					player.sendMessage(lang.getColoredMessage(userLang, "noaccount"));
 					return true;
 				}
 				
-				Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
-				
-				if (cuboid == null) {
-					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
-					return true;
-				}
-				
-				if (CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
+				if (!Economy.getInstance().insideBankCuboid(player)) {
 					player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
 					return true;
 				}
@@ -106,7 +98,7 @@ public class CreditCommand extends AbstractCommand {
 			if (args[1].equalsIgnoreCase("info")) {				
 				if (args.length == 2) {
 					
-					BankAccount acc = EdgeConomy.getEconomy().getAccount(user.getName());
+					BankAccount acc = EdgeConomy.getEconomy().getAccount(user);
 					
 					if (acc == null) {
 						player.sendMessage(lang.getColoredMessage(userLang, "noaccount"));
@@ -135,7 +127,7 @@ public class CreditCommand extends AbstractCommand {
 						return true;
 					}
 					
-					player.sendMessage(lang.getColoredMessage(userLang, "admin_credit_info_title").replace("[0]", acc.getID() + ""));
+					player.sendMessage(lang.getColoredMessage(userLang, "admin_credit_info_title"));
 					player.sendMessage(lang.getColoredMessage(userLang, "credit_info_rawcredit").replace("[0]", acc.getRawCredit() + ""));
 					player.sendMessage(lang.getColoredMessage(userLang, "credit_info_credit").replace("[0]", acc.getCredit() + ""));
 					player.sendMessage(lang.getColoredMessage(userLang, "credit_info_remaining").replace("[0]", acc.getCredit() - acc.getPaidCredit() + ""));
@@ -170,14 +162,7 @@ public class CreditCommand extends AbstractCommand {
 						return true;
 					}
 					
-					Cuboid cuboid = Cuboid.getCuboid(player.getLocation());
-					
-					if (cuboid == null) {
-						player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
-						return true;
-					}
-					
-					if (CuboidType.getType(cuboid.getCuboidType()) != CuboidType.Bank) {
+					if (!Economy.getInstance().insideBankCuboid(player)) {
 						player.sendMessage(lang.getColoredMessage(userLang, "notinrange_location").replace("[0]", "Bank"));
 						return true;
 					}
@@ -186,14 +171,16 @@ public class CreditCommand extends AbstractCommand {
 						double payback = amount - acc.getCredit();
 						
 						acc.updateCredit(acc.getCredit() - amount);
+						acc.updatePaidCredit(0);
 						acc.updateBalance(acc.getBalance() - amount + payback);
 						
-						player.sendMessage(lang.getColoredMessage(userLang, "admin_credit_remove_success").replace("[0]", acc.getID() + ""));
+						player.sendMessage(lang.getColoredMessage(userLang, "credit_pay_complete"));
 						
 						return true;
 					}
 					
 					acc.updateCredit(acc.getCredit() - amount);
+					acc.updatePaidCredit(acc.getPaidCredit() + amount);
 					acc.updateBalance(acc.getBalance() - amount);
 					
 					player.sendMessage(lang.getColoredMessage(userLang, "credit_pay_success").replace("[0]", amount + "").replace("[1]", acc.getCredit() - acc.getPaidCredit() + ""));
@@ -207,11 +194,11 @@ public class CreditCommand extends AbstractCommand {
 						return true;
 					}
 					
-					BankAccount acc = EdgeConomy.getEconomy().getAccount(Integer.parseInt(args[2]));
+					BankAccount acc = EdgeConomy.getEconomy().getAccount(args[2]);
 					double amount = Double.parseDouble(args[3]);
 					
 					if (acc == null) {
-						player.sendMessage(lang.getColoredMessage(userLang, "unknownaccount").replace("[0]", args[2]));
+						player.sendMessage(lang.getColoredMessage(userLang, "noaccount_user").replace("[0]", args[2]));
 						return true;
 					}
 					
@@ -223,16 +210,21 @@ public class CreditCommand extends AbstractCommand {
 					if (amount > acc.getCredit()) {
 						
 						acc.updateCredit(0);
-						player.sendMessage(lang.getColoredMessage(userLang, "admin_credit_pay_success").replace("[0]", amount + "").replace("[1]", acc.getID() + "").replace("[2]", "0"));
+						player.sendMessage(lang.getColoredMessage(userLang, "admin_credit_remove_success").replace("[0]", args[2]));
 						
 						return true;
 					}
 					
 					acc.updateCredit(acc.getCredit() - amount);
-					player.sendMessage(lang.getColoredMessage(userLang, "admin_credit_pay_success").replace("[0]", amount + "").replace("[1]", acc.getID() + "").replace("[2]", acc.getCredit() + ""));
+					player.sendMessage(lang.getColoredMessage(userLang, "admin_credit_pay_success").replace("[0]", amount + "").replace("[1]", args[2]).replace("[2]", acc.getCredit() + ""));
 					
 					return true;
 				}
+			}
+			
+			if (!Level.canUse(user, Level.MODERATOR)) {
+				player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
+				return true;
 			}
 			
 			if (args[1].equalsIgnoreCase("set")) {
@@ -241,16 +233,11 @@ public class CreditCommand extends AbstractCommand {
 					return false;
 				}
 				
-				if (!Level.canUse(user, Level.MODERATOR)) {
-					player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
-					return true;
-				}
-				
-				BankAccount acc = EdgeConomy.getEconomy().getAccountByOwnerID(Integer.parseInt(args[2]));
+				BankAccount acc = EdgeConomy.getEconomy().getAccount(args[2]);
 				double amount = Double.parseDouble(args[3]);
 				
 				if (acc == null) {
-					player.sendMessage(lang.getColoredMessage(userLang, "unknownaccount").replace("[0]", args[2]));
+					player.sendMessage(lang.getColoredMessage(userLang, "noaccount_user").replace("[0]", args[2]));
 					return true;
 				}
 				
@@ -271,20 +258,15 @@ public class CreditCommand extends AbstractCommand {
 					return false;
 				}
 				
-				if (!Level.canUse(user, Level.MODERATOR)) {
-					player.sendMessage(lang.getColoredMessage(userLang, "nopermission"));
-					return true;
-				}
-				
-				BankAccount acc = EdgeConomy.getEconomy().getAccountByOwnerID(Integer.parseInt(args[2]));
+				BankAccount acc = EdgeConomy.getEconomy().getAccount(args[2]);
 				
 				if (acc == null) {
-					player.sendMessage(lang.getColoredMessage(userLang, "unknownaccount").replace("[0]", args[2]));
+					player.sendMessage(lang.getColoredMessage(userLang, "noaccount_user").replace("[0]", args[2]));
 					return true;
 				}
 				
 				if (!(acc.getCredit() > 0)) {
-					player.sendMessage(lang.getColoredMessage(userLang, "nocredit_id").replace("[0]", args[2]));
+					player.sendMessage(lang.getColoredMessage(userLang, "nocredit_user").replace("[0]", args[2]));
 					return true;
 				}
 				

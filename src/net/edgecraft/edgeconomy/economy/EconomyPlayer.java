@@ -1,42 +1,72 @@
 package net.edgecraft.edgeconomy.economy;
 
-import net.edgecraft.edgeconomy.EdgeConomy;
+import java.util.UUID;
+
 import net.edgecraft.edgecore.EdgeCoreAPI;
 import net.edgecraft.edgecore.db.DatabaseHandler;
 import net.edgecraft.edgecore.user.User;
 
 public class EconomyPlayer {
 	
-	private int id;
+	private UUID user;
+	
 	private double cash;
 	private double totalGiven;
 	private double totalReceived;
 	private double totalDonated;
+	
 	private boolean welfare;
 	
 	private final DatabaseHandler db = EdgeCoreAPI.databaseAPI();
 	
 	protected EconomyPlayer() { /* ... */ }
 	
-	protected EconomyPlayer(int id, double cash, double totalGiven, double totalReceived, double totalDonated, boolean welfare) {
-		setID(id);
+	protected EconomyPlayer(UUID user, double cash, double totalGiven, double totalReceived, double totalDonated, boolean welfare) {
+		
+		setUser(user);
+		
 		setCash(cash);
 		setTotalGiven(totalGiven);
 		setTotalReceived(totalReceived);
 		setTotalDonated(totalDonated);
+		
 		setWelfareStatus(welfare);
 	}
 	
 	/**
-	 * Returns the players' id
-	 * @return Integer
+	 * Returns the UUID of the player
+	 * @return
 	 */
-	public int getID() {
-		return id;
+	public UUID getUser() {
+		return user;
 	}
 	
 	/**
-	 * Returns the players' cash
+	 * Returns the user as a class instance
+	 * @return User
+	 */
+	public User getUserInstance() {
+		return EdgeCoreAPI.userAPI().getUser(getUser());
+	}
+	
+	/**
+	 * Returns the name of the user
+	 * @return String
+	 */
+	public String getName() {
+		return getUserInstance().getName();
+	}
+	
+	/**
+	 * Returns an account or null, based on the player has one
+	 * @return BankAccount or null
+	 */
+	public BankAccount getAccount() {
+		return Economy.getInstance().getAccount(getUser());
+	}
+	
+	/**
+	 * Returns the amount of cash the player got
 	 * @return Double
 	 */
 	public double getCash() {
@@ -44,7 +74,7 @@ public class EconomyPlayer {
 	}
 	
 	/**
-	 * Returns the players' amount of total given cash
+	 * Returns the amount of total given cash
 	 * @return Double
 	 */
 	public double getTotalGiven() {
@@ -52,7 +82,7 @@ public class EconomyPlayer {
 	}
 	
 	/**
-	 * Returns the players' amount of total received cash
+	 * Returns the amount of total received cash
 	 * @return Double
 	 */
 	public double getTotalReceived() {
@@ -60,7 +90,7 @@ public class EconomyPlayer {
 	}
 	
 	/**
-	 * Returns the players' amount of total donated cash
+	 * Returns the amount of total donated cash
 	 * @return Double
 	 */
 	public double getTotalDonated() {
@@ -68,35 +98,11 @@ public class EconomyPlayer {
 	}
 	
 	/**
-	 * Returns if the player has welfare
+	 * Checks if the player is able to receive welfare
 	 * @return true/false
 	 */
 	public boolean hasWelfare() {
 		return welfare;
-	}
-	
-	/**
-	 * Returns the players' user instance
-	 * @return User
-	 */
-	public User getUser() {
-		return EdgeCoreAPI.userAPI().getUser(id);
-	}
-	
-	/**
-	 * Returns the players' bank account
-	 * @return
-	 */
-	public BankAccount getAccount() {
-		return EdgeConomy.getEconomy().getAccountByOwnerID(id);
-	}
-	
-	/**
-	 * Returns the players' name
-	 * @return String
-	 */
-	public String getName() {
-		return getUser().getName();
 	}
 	
 	/**
@@ -107,7 +113,7 @@ public class EconomyPlayer {
 	 */
 	private void update(String var, Object obj) throws Exception {
 		if (var != null && obj != null) {
-			this.db.prepareStatement("UPDATE " + Economy.ecoPlayerTable + " SET " + var + " = '" + obj.toString() + "' WHERE id = '" + id + "';").executeUpdate();
+			this.db.prepareStatement("UPDATE " + Economy.ecoPlayerTable + " SET " + var + " = '" + obj.toString() + "' WHERE uuid = '" + getUser().toString() + "';").executeUpdate();
 		}
 	}
 	
@@ -170,41 +176,42 @@ public class EconomyPlayer {
 	 * @param id
 	 */
 	public boolean checkWelfare() throws Exception {
-		if (getAccount().getBalance() >= Economy.getMaxWelfareBalance()) return false;
-		if (getCash() >= Economy.getMaxWelfareBalance()) return false;
-		if ((getCash() + getAccount().getBalance()) >= Economy.getMaxWelfareBalance()) return false;
+		if (getAccount().getBalance() >= Economy.getMaxWelfareAmount()) return false;
+		if (getCash() >= Economy.getMaxWelfareAmount()) return false;
+		if ((getCash() + getAccount().getBalance()) >= Economy.getMaxWelfareAmount()) return false;
 		
 		return true;
 	}
 	
 	/**
-	 * Sets the players' id
-	 * @param id
+	 * Sets the internal user
+	 * @param user
 	 */
-	protected void setID(int id) {
-		if (id >= 0)
-			this.id = id;
+	protected void setUser(UUID user) {
+		if (user != null)
+			this.user = user;
 	}
 	
 	/**
-	 * Sets the players' cash
+	 * Sets the amount of cash
 	 * @param cash
 	 */
 	protected void setCash(double cash) {
-		this.cash = cash;
+		if (cash >= 0)
+			this.cash = cash;
 	}
 	
 	/**
-	 * Sets the players' amount of total given cash
+	 * Sets the amount of total given cash
 	 * @param totalGiven
 	 */
 	protected void setTotalGiven(double totalGiven) {
-		if (totalGiven >= 0) 
+		if (totalGiven >= 0)
 			this.totalGiven = totalGiven;
 	}
 	
 	/**
-	 * Sets the players' amount of total received cash
+	 * Sets the amount of total received cash
 	 * @param totalReceived
 	 */
 	protected void setTotalReceived(double totalReceived) {
@@ -213,7 +220,7 @@ public class EconomyPlayer {
 	}
 	
 	/**
-	 * Sets the players' amount of total donated cash
+	 * Sets the amount of total donated cash
 	 * @param totalDonated
 	 */
 	protected void setTotalDonated(double totalDonated) {
@@ -222,10 +229,39 @@ public class EconomyPlayer {
 	}
 	
 	/**
-	 * Disables/Enables welfare for this player
+	 * Sets the welfare
 	 * @param welfare
 	 */
 	protected void setWelfareStatus(boolean welfare) {
 		this.welfare = welfare;
+	}
+	
+	@Override
+	public int hashCode() {
+		return (int) getUser().hashCode() * getUserInstance().hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		
+		if (obj == this) return true;
+		if (obj == null) return false;
+		if (!getClass().equals(obj.getClass())) return false;
+		
+		EconomyPlayer another = (EconomyPlayer) obj;
+		
+		if (another.getUser().equals(getUser())) {
+			if (another.getUserInstance().equals(getUserInstance())) {
+				
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	@Override
+	public String toString() {
+		return "EconomyPlayer {" + getUser().toString() + ";" + getCash() + "}";
 	}
 }
