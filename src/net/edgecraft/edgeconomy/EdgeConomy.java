@@ -63,12 +63,13 @@ public class EdgeConomy extends JavaPlugin {
 	 */
 	private void registerData() {
 		
+		economy.checkDatabase();		
 		this.getServer().getPluginManager().registerEvents(new HandleEconomyLogin(), this);
 		
 		commands.registerCommand( new CommandContainer( EconomyCommands.getInstance() ) );
 		
 		@SuppressWarnings("unused") BukkitTask ecoTask = new EconomySynchronizationTask().runTaskTimer(this, 0, 20L * 60 * 10);
-		@SuppressWarnings("unused") BukkitTask monitorTask = new EcoMonitorTask().runTaskTimer(this, 0, 20L * 60 * Economy.getPaydayInterval());
+		@SuppressWarnings("unused") BukkitTask monitorTask = new EcoMonitorTask().runTaskTimer(this, 50L, 20L * 60 * Economy.getPaydayInterval());
 	}
 	
 	/**

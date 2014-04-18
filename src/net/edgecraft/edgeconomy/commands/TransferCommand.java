@@ -162,12 +162,12 @@ public class TransferCommand extends AbstractCommand {
 			return;
 		}
 		
-		if (!Economy.getInstance().insideBankCuboid(sender)) {
+		if (!admin && !Economy.getInstance().insideBankCuboid(sender)) {
 			sender.sendMessage(lang.getColoredMessage(user.getLanguage(), "notinrange_location").replace("[0]", "Bank"));
 			return;
 		}
 		
-		if (Economy.getInstance().insideATMCuboid(sender)) {
+		if (!admin && Economy.getInstance().insideATMCuboid(sender)) {
 			
 			if (amount >= Economy.getMonitoredAmount()) {
 				for (User u : EdgeCoreAPI.userAPI().getUsers().values()) {

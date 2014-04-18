@@ -20,8 +20,8 @@ public class Economy {
 	public static final String ecoPlayerTable = "edgeconomy_eplayer";
 	
 	// public static final Map<UUID, List<BankAccount>> accounts = new LinkedHashMap<>(); - // Multiple Accounts?
-	public static final Map<Integer, BankAccount> accounts = new LinkedHashMap<>();
-	public static final Map<UUID, EconomyPlayer> ePlayers = new LinkedHashMap<>();
+	public static Map<Integer, BankAccount> accounts = new LinkedHashMap<>();
+	public static Map<UUID, EconomyPlayer> ePlayers = new LinkedHashMap<>();
 	
 	private static String state;
 	private static String currency;
@@ -56,7 +56,7 @@ public class Economy {
 	public final void checkDatabase() {
 		try {
 			
-			db.prepareStatement("CREATE TABLE IF NOT EXISTS '" + Economy.accountTable + "' (id INTEGER AUTO_INCREMENT, "
+			db.prepareStatement("CREATE TABLE IF NOT EXISTS " + Economy.accountTable + " (id INTEGER AUTO_INCREMENT, "
 							+ "uuid VARCHAR(36) NOT NULL, "
 							+ "balance DOUBLE NOT NULL, "
 							+ "lowestbalance DOUBLE NOT NULL, "
@@ -64,14 +64,14 @@ public class Economy {
 							+ "credit DOUBLE NOT NULL, "
 							+ "paidcredit DOUBLE NOT NULL, "
 							+ "closed BOOLEAN NOT NULL DEFAULT 0, "
-							+ "reason TEXT NOT NULL, PRIMARY KEY (id));").executeUpdate();
+							+ "reason TEXT NOT NULL, PRIMARY KEY(id));").executeUpdate();
 			
-			db.prepareStatement("CREATE TABLE IF NOT EXISTS '" + Economy.ecoPlayerTable + "' (uuid VARCHAR(36) NOT NULL, "
+			db.prepareStatement("CREATE TABLE IF NOT EXISTS " + Economy.ecoPlayerTable + " (uuid VARCHAR(36) NOT NULL, "
 							+ "cash DOUBLE NOT NULL, "
 							+ "totalgiven DOUBLE NOT NULL, "
 							+ "totalreceived DOUBLE NOT NULL, "
 							+ "totaldonated DOUBLE NOT NULL, "
-							+ "welfare BOOLEAN NOT NULL DEFAULT 0);");			
+							+ "welfare BOOLEAN NOT NULL DEFAULT 0, PRIMARY KEY(uuid));").executeUpdate();			
 			
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -100,7 +100,7 @@ public class Economy {
 			if (hasAccount(uuid))
 				return;
 			
-			PreparedStatement registerAcc = db.prepareStatement("INSERT INTO " + Economy.accountTable + " (uuid, balance, lowestbalance, highestbaalance, credit, paidcredit, closed, reason) "
+			PreparedStatement registerAcc = db.prepareStatement("INSERT INTO " + Economy.accountTable + " (uuid, balance, lowestbalance, highestbalance, credit, paidcredit, closed, reason) "
 					+ "VALUES (?, ?, '0', '0', ?, '0', DEFAULT, '');");
 			
 			registerAcc.setString(1, uuid.toString());
@@ -108,7 +108,7 @@ public class Economy {
 			registerAcc.setDouble(3, credit);
 			registerAcc.executeUpdate();
 			
-			synchronizeAccount(getGreatestId(Economy.accountTable));
+			synchronizeAccount(getGreatestId(Economy.accountTable, "id"));
 			
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -276,9 +276,9 @@ public class Economy {
 		return acc.getEconomyPlayer();
 	}
 	
-	public int getGreatestId(String table) throws Exception {
-		List<Map<String, Object>> tempVar = db.getResults("SELECT MAX(id) AS amount FROM " + table + ";");
-		int tempID = Integer.parseInt(String.valueOf(tempVar.get(0).get("id")));
+	public int getGreatestId(String table, String column) throws Exception {
+		List<Map<String, Object>> tempVar = db.getResults("SELECT COUNT(" + column + ") AS amount FROM " + table + ";");
+		int tempID = Integer.parseInt(String.valueOf(tempVar.get(0).get("amount")));
 		
 		if (tempID <= 0) return 1;
 		
@@ -289,12 +289,12 @@ public class Economy {
 		try {
 			
 			if (accounts) {
-				for (int i = 1; i <= getGreatestId(Economy.accountTable); i++)
+				for (int i = 1; i <= getGreatestId(Economy.accountTable, "id"); i++)
 					synchronizeAccount(i);
 			}
 			
 			if (ecoplayers) {
-				for (int i = 1; i <= getGreatestId(Economy.ecoPlayerTable); i++)
+				for (int i = 1; i <= getGreatestId(Economy.ecoPlayerTable, "uuid"); i++)
 					for (User user : EdgeCoreAPI.userAPI().getUsers().values())
 						synchronizeEconomyPlayer(user.getUUID());
 			}
@@ -347,8 +347,7 @@ public class Economy {
 				}
 				
 				acc.updatePayday();
-				Economy.accounts.put(acc.getId(), acc);
-				
+				getAccounts().put(acc.getId(), acc);
 			}
 			
 		} catch(Exception e) {
